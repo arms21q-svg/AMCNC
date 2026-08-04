@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AM CNC WOOD DESIGN
+
+Luxury, minimal, bilingual website for AM CNC WOOD DESIGN — CNC wood design and carving company.
+
+## Tech Stack
+
+- **Next.js 16** (App Router) + TypeScript (Strict)
+- **Tailwind CSS 4** + shadcn/ui components
+- **Framer Motion** — subtle animations
+- **Supabase** + **Prisma ORM** + PostgreSQL
+- **next-intl** — Arabic (RTL) / English (LTR)
+- **React Hook Form** + **Zod** validation
+- **Lucide React** icons
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+Copy `.env.example` to `.env` and fill in your Supabase credentials:
+
+```bash
+cp .env.example .env
+```
+
+Required variables:
+- `DATABASE_URL` — Supabase PostgreSQL connection string
+- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anon key
+- `JWT_SECRET` — Secret for admin JWT tokens
+
+### 3. Set up database
+
+```bash
+npm run db:push
+npm run db:seed
+```
+
+### 4. Run development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000/ar](http://localhost:3000/ar) (Arabic) or [http://localhost:3000/en](http://localhost:3000/en) (English).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Pages
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Page | Route |
+|------|-------|
+| Home | `/[locale]` |
+| Portfolio | `/[locale]/portfolio` |
+| Project Detail | `/[locale]/portfolio/[slug]` |
+| Services | `/[locale]/services` |
+| About | `/[locale]/about` |
+| Contact | `/[locale]/contact` |
+| Admin Dashboard | `/admin` |
+| Admin Login | `/admin/login` |
 
-## Learn More
+## Admin Access
 
-To learn more about Next.js, take a look at the following resources:
+Default credentials (after seeding):
+- **Email:** admin@amcncwood.com
+- **Password:** admin123
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Dark / Light mode with gold accent (#C89B3C)
+- Full Arabic RTL / English LTR support
+- Image similarity search (dHash algorithm, no external API)
+- SEO: metadata, Open Graph, JSON-LD, sitemap, robots.txt
+- Contact form with validation
+- Lightbox gallery on project pages
+- WhatsApp floating button
+- Back to top button
+- Responsive design for all devices
+- Admin panel with RBAC
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev          # Start dev server
+npm run build        # Production build
+npm run start        # Start production server
+npm run db:generate  # Generate Prisma client
+npm run db:push      # Push schema to database
+npm run db:migrate   # Run migrations
+npm run db:seed      # Seed initial data
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── [locale]/          # Public pages (i18n)
+│   ├── admin/             # Admin dashboard
+│   └── api/               # API routes
+├── components/
+│   ├── ui/                # shadcn/ui components
+│   ├── layout/            # Header, Footer, etc.
+│   ├── home/              # Home page sections
+│   ├── portfolio/         # Portfolio components
+│   └── contact/           # Contact form
+├── lib/                   # Utilities, Prisma, Auth
+├── i18n/                  # Internationalization config
+└── messages/              # Translation files (ar.json, en.json)
+prisma/
+├── schema.prisma          # Database schema
+└── seed.ts                # Seed script
+```
+
+## License
+
+Private — AM CNC WOOD DESIGN

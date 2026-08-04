@@ -1,0 +1,168 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
+import { Trash2, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { ADMIN } from "@/lib/admin-labels";
+import { useMountFetch } from "@/hooks/use-mount-fetch";
+import { fetchJson } from "@/lib/fetch-json";
+
+interface MessageRow {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  subject?: string | null;
+  message: string;
+  status: "NEW" | "READ" | "REPLIED";
+  createdAt: string;
+}
+
+const statusColors = {
+  NEW: "bg-green-500/10 text-green-400",
+  READ: "bg-blue-500/10 text-blue-400",
+  REPLIED: "bg-purple-500/10 text-purple-400",
+};
+
+const statusLabels = {
+  NEW: ADMIN.statusNew,
+  READ: ADMIN.statusRead,
+  REPLIED: ADMIN.statusReplied,
+};
+
+export function MessagesManager() {
+  const [messages, setMessages] = useState<MessageRow[]>([]);
+
+  const fetchData = useCallback(async (isActive: () => boolean) => {
+    try {
+      const data = await fetchJson<{ messages?: MessageRow[] }>("/api/admin/messages");
+      if (isActive()) setMessages(data.messages || []);
+    } catch {
+      if (isActive()) toast.error("تعذر تحميل الرسائل");
+    }
+  }, []);
+
+  const { loading, reload: load } = useMountFetch(fetchData);
+
+  const updateStatus = async (id: string, status: MessageRow["status"]) => {
+    try {
+      const res = await fetch(`/api/admin/messages/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      load();
+    } catch {
+      toast.error("فشل تحديث الحالة");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("حذف هذه الرسالة؟")) return;
+    try {
+      const res = await fetch(`/api/admin/messages/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
+      toast.success("تم الحذف");
+      load();
+    } catch {
+      toast.error("فشل الحذف");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <h2 className="font-display text-2xl font-bold">{ADMIN.messages}</h2>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {ADMIN.contactMessages} ({messages.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-muted text-sm">{ADMIN.loading}</p>
+          ) : messages.length === 0 ? (
+            <p className="text-muted text-sm">{ADMIN.noMessages}</p>
+          ) : (
+            <div className="space-y-4">
+              {messages.map((msg) => (
+                <div key={msg.id} className="rounded-lg border border-border p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium">{msg.name}</p>
+                        <span
+                          className={cn(
+                            "text-xs px-2 py-0.5 rounded-full",
+                            statusColors[msg.status]
+                          )}
+                        >
+                          {statusLabels[msg.status]}
+                        </span>
+                      </div>
+                      <a
+                        href={`mailto:${msg.email}`}
+                        className="text-sm text-primary flex items-center gap-1"
+                        dir="ltr"
+                      >
+                        <Mail className="h-3 w-3" />
+                        {msg.email}
+                      </a>
+                      {msg.phone && (
+                        <p className="text-sm text-muted mt-1" dir="ltr">
+                          {msg.phone}
+                        </p>
+                      )}
+                      {msg.subject && (
+                        <p className="text-sm font-medium mt-2">{msg.subject}</p>
+                      )}
+                      <p className="text-sm text-muted mt-2 whitespace-pre-wrap">
+                        {msg.message}
+                      </p>
+                      <p className="text-xs text-muted mt-2">
+                        {new Date(msg.createdAt).toLocaleString("ar-IQ")}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {msg.status === "NEW" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateStatus(msg.id, "READ")}
+                        >
+                          {ADMIN.markRead}
+                        </Button>
+                      )}
+                      {msg.status !== "REPLIED" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateStatus(msg.id, "REPLIED")}
+                        >
+                          {ADMIN.markReplied}
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive"
+                        onClick={() => handleDelete(msg.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

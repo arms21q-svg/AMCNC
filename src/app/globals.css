@@ -1,26 +1,195 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1a1a1a;
+  --muted: #666666;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --header: #f8f8f8;
+  --footer: #f8f8f8;
+  --border: #e5e5e5;
+  --primary: #84cc16;
+  --primary-hover: #a3e635;
+  --primary-foreground: #000000;
+  --brand-green: #84cc16;
+  --brand-green-dark: #4d7c0f;
+  --brand-green-light: #a3e635;
+  --brand-glow: rgba(132, 204, 22, 0.4);
+  --brand-gold: #d4af37;
+  --brand-gold-light: #fbbf24;
+  --accent: #84cc16;
+  --ring: #84cc16;
+  --input: #e5e5e5;
+  --destructive: #ef4444;
+  --radius: 1rem;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --muted: #9ca3af;
+  --card: rgba(255, 255, 255, 0.03);
+  --card-foreground: #f5f5f5;
+  --header: rgba(0, 0, 0, 0.9);
+  --footer: #000000;
+  --border: rgba(255, 255, 255, 0.08);
+  --primary: #84cc16;
+  --primary-hover: #a3e635;
+  --primary-foreground: #000000;
+  --brand-green: #84cc16;
+  --brand-green-dark: #4d7c0f;
+  --brand-green-light: #a3e635;
+  --brand-glow: rgba(132, 204, 22, 0.35);
+  --brand-gold: #d4af37;
+  --brand-gold-light: #fbbf24;
+  --accent: #84cc16;
+  --ring: #84cc16;
+  --input: rgba(255, 255, 255, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-header: var(--header);
+  --color-footer: var(--footer);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-brand-green: var(--brand-green);
+  --color-brand-green-dark: var(--brand-green-dark);
+  --color-brand-green-light: var(--brand-green-light);
+  --color-brand-gold: var(--brand-gold);
+  --color-accent: var(--accent);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-cairo), system-ui, sans-serif;
+  --font-display: var(--font-montserrat), system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--brand-green);
+  color: #000;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.site-container {
+  @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+}
+
+.section-padding {
+  @apply py-16 md:py-24;
+}
+
+.section-divider {
+  @apply border-t border-border;
+}
+
+/* Glass cards */
+.glass-card {
+  @apply rounded-2xl border border-border bg-card backdrop-blur-xl;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-card-hover {
+  @apply transition-all duration-300 hover:border-brand-green/30 hover:shadow-[0_0_30px_var(--brand-glow)];
+}
+
+/* Buttons */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-green px-6 py-3 text-sm font-semibold text-black transition-all hover:bg-brand-green-light hover:shadow-[0_0_24px_var(--brand-glow)];
+}
+
+.btn-primary-mobile {
+  @apply inline-flex items-center justify-center rounded-lg bg-brand-green px-3 py-2 text-[11px] font-semibold leading-tight text-black transition-all hover:bg-brand-green-light whitespace-nowrap;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-transparent px-6 py-3 text-sm font-semibold text-foreground transition-all hover:border-brand-green/40 hover:bg-white/5;
+}
+
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-brand-green/40 px-6 py-3 text-sm font-semibold text-brand-green transition-all hover:bg-brand-green/10;
+}
+
+/* Glow effects */
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--brand-glow) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.hero-glow {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% -10%, rgba(132, 204, 22, 0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 80% 50%, rgba(212, 175, 55, 0.06) 0%, transparent 50%),
+    #000000;
+}
+
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.diamond-glow {
+  background: linear-gradient(135deg, rgba(132, 204, 22, 0.2), rgba(212, 175, 55, 0.08));
+  box-shadow: 0 0 60px rgba(132, 204, 22, 0.2), inset 0 0 30px rgba(212, 175, 55, 0.08);
+}
+
+.nav-link-active {
+  @apply text-brand-green;
+}
+
+.tagline {
+  @apply text-xs font-medium uppercase tracking-[0.2em] text-brand-gold;
+}
+
+.surface-card {
+  @apply rounded-2xl border border-border bg-card backdrop-blur-xl;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.surface-card-hover {
+  @apply transition-all duration-300 hover:border-brand-green/30 hover:shadow-[0_0_30px_var(--brand-glow)];
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
