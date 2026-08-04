@@ -25,7 +25,7 @@ export function CapabilitiesSection() {
   const t = useTranslations("capabilities");
 
   return (
-    <section className="section-padding section-divider bg-[#080808]">
+    <section className="section-padding section-divider bg-[#080808] hidden md:block">
       <div className="site-container">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

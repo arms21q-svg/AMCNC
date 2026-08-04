@@ -7,17 +7,40 @@ const globalForPrisma = globalThis as unknown as {
   pool: Pool | undefined;
 };
 
-function getConnectionString(): string {
-  const direct = process.env.DIRECT_URL;
-  const pooled = process.env.DATABASE_URL;
+function normalizeConnectionString(raw: string): string {
+  const url = raw.trim();
+  if (!url) return url;
 
-  // Production: prefer transaction pooler when configured.
-  if (process.env.NODE_ENV === "production" && pooled) {
-    return pooled;
+  try {
+    const parsed = new URL(url);
+    const isSupabase = parsed.hostname.includes("supabase.com");
+
+    // Transaction pooler (6543) needs pgbouncer mode for Prisma.
+    if (parsed.port === "6543" && !parsed.searchParams.has("pgbouncer")) {
+      parsed.searchParams.set("pgbouncer", "true");
+    }
+
+    if (isSupabase && !parsed.searchParams.has("connect_timeout")) {
+      parsed.searchParams.set("connect_timeout", "30");
+    }
+
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function getConnectionString(): string {
+  const direct = process.env.DIRECT_URL?.trim();
+  const pooled = process.env.DATABASE_URL?.trim();
+
+  // Dev/local: direct session URL (5432) is more reliable than transaction pooler.
+  if (process.env.NODE_ENV !== "production") {
+    return normalizeConnectionString(direct || pooled || "");
   }
 
-  // Dev/local: session/direct URL (5432) is more reliable than pooler 6543.
-  return direct || pooled || "";
+  // Production: prefer pooler when configured, with pgbouncer params if needed.
+  return normalizeConnectionString(pooled || direct || "");
 }
 
 function createPool(): Pool {
@@ -31,17 +54,41 @@ function createPool(): Pool {
   return new Pool({
     connectionString,
     ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
-    max: process.env.NODE_ENV === "production" ? 5 : 3,
-    idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 15_000,
+    max: process.env.NODE_ENV === "production" ? 5 : 2,
+    idleTimeoutMillis: 20_000,
+    connectionTimeoutMillis: process.env.NODE_ENV === "production" ? 12_000 : 30_000,
+  });
+}
+
+function attachPoolErrorHandler(pool: Pool): void {
+  pool.on("error", () => {
+    // Prevent unhandled pool errors from crashing the dev server.
   });
 }
 
 function createPrismaClient(): PrismaClient {
   const pool = createPool();
+  attachPoolErrorHandler(pool);
   globalForPrisma.pool = pool;
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
+}
+
+export async function resetPrismaPool(): Promise<void> {
+  try {
+    await globalForPrisma.prisma?.$disconnect();
+  } catch {
+    // ignore
+  }
+
+  try {
+    await globalForPrisma.pool?.end();
+  } catch {
+    // ignore
+  }
+
+  globalForPrisma.prisma = undefined;
+  globalForPrisma.pool = undefined;
 }
 
 export function getPrisma(): PrismaClient {

@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { safeDbQuery } from "@/lib/safe-db";
+import { DEMO_FEATURED_PROJECTS } from "@/lib/demo-projects";
 import type { ProjectListItem } from "@/lib/content-types";
 
 export type { ProjectListItem };
@@ -34,7 +35,7 @@ export async function getPublishedProjects(): Promise<ProjectListItem[]> {
         include: projectListInclude,
         orderBy: [{ order: "asc" }, { createdAt: "desc" }],
       }),
-    [],
+    DEMO_FEATURED_PROJECTS,
     "projects"
   );
 }
@@ -61,7 +62,7 @@ export async function getFeaturedProjects(limit = 4): Promise<ProjectListItem[]>
     });
 
     return [...featured, ...rest];
-  }, [], "featured-projects");
+  }, DEMO_FEATURED_PROJECTS.slice(0, limit), "featured-projects");
 }
 
 export async function getProjectBySlug(slug: string) {

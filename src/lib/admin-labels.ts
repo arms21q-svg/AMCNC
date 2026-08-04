@@ -26,6 +26,8 @@ export const ADMIN = {
   locationAr: "الموقع (عربي)",
   locationEn: "الموقع (إنجليزي)",
   mapsUrl: "رابط الخريطة (Google Maps)",
+  socialLinks: "روابط التواصل",
+  email: "البريد الإلكتروني",
   syncLinksHint:
     "عند الحفظ سيتم تحديث روابط واتساب والاتصال والموقع في الزر العائم تلقائياً.",
   heroSection: "قسم البانر الرئيسي",
@@ -34,7 +36,6 @@ export const ADMIN = {
     "فعّل «مميز» على أي عمل ليظهر في الصفحة الرئيسية (حتى 4 أعمال).",
   loginTitle: "تسجيل الدخول",
   loginSubtitle: "لوحة تحكم AM CNC WOOD DESIGN",
-  email: "البريد الإلكتروني",
   password: "كلمة المرور",
   signIn: "دخول",
   signingIn: "جاري الدخول...",
@@ -143,9 +144,21 @@ export const HOMEPAGE_SETTING_KEYS = [
   "hero_subtitle_en",
 ] as const;
 
+export const SOCIAL_PLATFORM_LABELS_AR: Record<string, string> = {
+  instagram: "انستغرام",
+  facebook: "فيسبوك",
+  twitter: "X (تويتر)",
+  linkedin: "لينكدإن",
+  youtube: "يوتيوب",
+  tiktok: "تيك توك",
+  snapchat: "سناب شات",
+  telegram: "تيليغرام",
+};
+
 export const CONTACT_SETTING_KEYS = [
   "phone",
   "whatsapp",
+  "email",
   "address_ar",
   "address_en",
   "maps_url",

@@ -1,13 +1,25 @@
-import { useTranslations } from "next-intl";
+"use client";
+
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { Logo } from "./logo";
+import { useSiteData } from "./site-data-context";
+import { getFloatingIcon } from "@/lib/floating-link-ui";
+import { SOCIAL_PLATFORM_LABELS_AR } from "@/lib/admin-labels";
 
 export function Footer() {
   const t = useTranslations("footer");
   const nav = useTranslations("nav");
-  const contact = useTranslations("contact");
+  const contactT = useTranslations("contact");
   const hero = useTranslations("hero");
+  const locale = useLocale();
+  const { contact, socialLinks } = useSiteData();
+
+  const address = locale === "ar" ? contact.addressAr : contact.addressEn;
+  const phoneHref = contact.phone.startsWith("+")
+    ? `tel:${contact.phone}`
+    : `tel:+${contact.phone.replace(/\D/g, "")}`;
 
   const links = [
     { href: "/", key: "home" },
@@ -54,43 +66,78 @@ export function Footer() {
               {t("contactInfo")}
             </h3>
             <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-sm text-muted">
-                <MapPin className="h-4 w-4 mt-0.5 text-brand-green shrink-0" />
-                <span>Riyadh, Saudi Arabia</span>
-              </li>
-              <li className="flex items-center gap-3 text-sm text-muted">
-                <Phone className="h-4 w-4 text-brand-green shrink-0" />
-                <a href="tel:+966500000000" className="hover:text-brand-green transition-colors">
-                  +966 50 000 0000
-                </a>
-              </li>
-              <li className="flex items-center gap-3 text-sm text-muted">
-                <Mail className="h-4 w-4 text-brand-green shrink-0" />
-                <a href="mailto:info@amcncwood.com" className="hover:text-brand-green transition-colors">
-                  info@amcncwood.com
-                </a>
-              </li>
+              {address && (
+                <li className="flex items-start gap-3 text-sm text-muted">
+                  <MapPin className="h-4 w-4 mt-0.5 text-brand-green shrink-0" />
+                  {contact.mapsUrl ? (
+                    <a
+                      href={contact.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-brand-green transition-colors"
+                    >
+                      {address}
+                    </a>
+                  ) : (
+                    <span>{address}</span>
+                  )}
+                </li>
+              )}
+              {contact.phone && (
+                <li className="flex items-center gap-3 text-sm text-muted">
+                  <Phone className="h-4 w-4 text-brand-green shrink-0" />
+                  <a
+                    href={phoneHref}
+                    className="hover:text-brand-green transition-colors"
+                  >
+                    {contact.phone}
+                  </a>
+                </li>
+              )}
+              {contact.email && (
+                <li className="flex items-center gap-3 text-sm text-muted">
+                  <Mail className="h-4 w-4 text-brand-green shrink-0" />
+                  <a
+                    href={`mailto:${contact.email}`}
+                    className="hover:text-brand-green transition-colors"
+                  >
+                    {contact.email}
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
 
           <div>
             <h3 className="font-display text-lg font-semibold mb-4">
-              {contact("followUs")}
+              {contactT("followUs")}
             </h3>
-            <div className="flex gap-3">
-              {["instagram", "twitter", "facebook", "linkedin"].map((platform) => (
-                <a
-                  key={platform}
-                  href={`https://${platform}.com`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="h-10 w-10 rounded-lg border border-border flex items-center justify-center text-muted hover:text-brand-gold hover:border-brand-gold transition-colors capitalize text-xs"
-                  aria-label={platform}
-                >
-                  {platform[0].toUpperCase()}
-                </a>
-              ))}
-            </div>
+            {socialLinks.length > 0 ? (
+              <div className="flex flex-wrap gap-3">
+                {socialLinks.map((link) => {
+                  const Icon = getFloatingIcon(link.icon || link.platform);
+                  const label =
+                    locale === "ar"
+                      ? SOCIAL_PLATFORM_LABELS_AR[link.platform] || link.platform
+                      : link.platform;
+
+                  return (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:border-brand-gold hover:text-brand-gold"
+                    >
+                      <Icon className="h-4 w-4" />
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted">{contactT("socialLinksHint")}</p>
+            )}
           </div>
         </div>
 

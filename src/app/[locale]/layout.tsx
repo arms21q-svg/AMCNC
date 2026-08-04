@@ -1,12 +1,21 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { Header } from "@/components/layout/header";
 import { LayoutExtras } from "@/components/layout/layout-extras";
-import { SetLocaleAttributes } from "@/components/layout/set-locale-attributes";
+import { SkipToContent } from "@/components/layout/skip-to-content";
+import { SiteDataProvider } from "@/components/layout/site-data-context";
 import { routing } from "@/i18n/routing";
 import { BRAND_LOGO, BRAND_NAME } from "@/lib/brand";
+import { getContactSettings } from "@/lib/site-settings.server";
+import { getActiveSocialLinks } from "@/lib/social-links.server";
+import {
+  buildLocalBusinessJsonLd,
+  buildOrganizationJsonLd,
+  buildWebSiteJsonLd,
+  getSiteUrl,
+} from "@/lib/seo";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -26,20 +35,12 @@ export async function generateMetadata({
       template: `%s | ${BRAND_NAME}`,
     },
     description: messages.metadata.description,
-    metadataBase: new URL(
-      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-    ),
+    keywords: messages.metadata.keywords,
+    metadataBase: new URL(getSiteUrl()),
     icons: {
       icon: BRAND_LOGO,
       apple: BRAND_LOGO,
       shortcut: BRAND_LOGO,
-    },
-    alternates: {
-      canonical: "/",
-      languages: {
-        ar: "/ar",
-        en: "/en",
-      },
     },
     openGraph: {
       type: "website",
@@ -58,6 +59,17 @@ export async function generateMetadata({
     robots: {
       index: true,
       follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+    formatDetection: {
+      telephone: true,
+      email: true,
+      address: true,
     },
   };
 }
@@ -71,33 +83,42 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const messages = await getMessages();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: BRAND_NAME,
-    url: siteUrl,
-    logo: `${siteUrl}${BRAND_LOGO}`,
-    description:
-      locale === "ar"
-        ? "شركة متخصصة في تصميم ونحت الخشب بتقنية CNC"
-        : "Specialized in CNC wood design and carving",
-  };
+  const [messages, contact, socialLinks, tCommon] = await Promise.all([
+    getMessages(),
+    getContactSettings(),
+    getActiveSocialLinks(),
+    getTranslations({ locale, namespace: "common" }),
+  ]);
+
+  const jsonLd = [
+    buildOrganizationJsonLd(
+      locale,
+      socialLinks.map((link) => link.url)
+    ),
+    buildWebSiteJsonLd(locale),
+    buildLocalBusinessJsonLd(locale),
+  ];
 
   return (
     <>
-      <SetLocaleAttributes locale={locale} />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <NextIntlClientProvider messages={messages}>
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <LayoutExtras />
-        <AppToaster locale={locale} />
-      </NextIntlClientProvider>
+      <SkipToContent label={tCommon("skipToContent")} />
+      {jsonLd.map((schema, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
+      <SiteDataProvider contact={contact} socialLinks={socialLinks}>
+        <NextIntlClientProvider messages={messages}>
+          <Header />
+          <main id="main-content" className="min-h-screen">
+            {children}
+          </main>
+          <LayoutExtras />
+          <AppToaster locale={locale} />
+        </NextIntlClientProvider>
+      </SiteDataProvider>
     </>
   );
 }

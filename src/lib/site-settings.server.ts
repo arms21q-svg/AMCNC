@@ -23,6 +23,30 @@ const HERO_DEFAULTS_EN = {
 };
 
 export async function getSettingsMap(): Promise<SettingsMap> {
+  return getSettingsMapCached();
+}
+
+let settingsInflight: Promise<SettingsMap> | null = null;
+let settingsCache: { value: SettingsMap; expiresAt: number } | null = null;
+
+async function getSettingsMapCached(): Promise<SettingsMap> {
+  const now = Date.now();
+  if (settingsCache && settingsCache.expiresAt > now) {
+    return settingsCache.value;
+  }
+
+  if (settingsInflight) {
+    return settingsInflight;
+  }
+
+  settingsInflight = loadSettingsMap().finally(() => {
+    settingsInflight = null;
+  });
+
+  return settingsInflight;
+}
+
+async function loadSettingsMap(): Promise<SettingsMap> {
   const rows = await safeDbQuery(
     () => prisma.setting.findMany(),
     [],
@@ -39,6 +63,12 @@ export async function getSettingsMap(): Promise<SettingsMap> {
       map[row.key] = row.value || "";
     }
   }
+
+  settingsCache = {
+    value: map,
+    expiresAt: Date.now() + (rows.length > 0 ? 60_000 : 10_000),
+  };
+
   return map;
 }
 
@@ -75,10 +105,11 @@ export async function getHomepageContent(locale: string) {
 export async function getContactSettings() {
   const settings = await getSettingsMap();
   return {
-    phone: settings.phone || "+9647700000000",
-    whatsapp: settings.whatsapp || settings.phone || "9647700000000",
-    addressAr: settings.address_ar || "بغداد، العراق",
-    addressEn: settings.address_en || "Baghdad, Iraq",
+    phone: settings.phone || "+966500000000",
+    whatsapp: settings.whatsapp || settings.phone || "966500000000",
+    email: settings.email || "info@amcncwood.com",
+    addressAr: settings.address_ar || "الرياض، المملكة العربية السعودية",
+    addressEn: settings.address_en || "Riyadh, Saudi Arabia",
     mapsUrl: settings.maps_url || "",
   };
 }

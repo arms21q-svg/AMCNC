@@ -4,6 +4,17 @@ import { NextRequest, NextResponse } from "next/server";
 
 const intlMiddleware = createMiddleware(routing);
 
+function resolveLocale(pathname: string): string {
+  if (pathname.startsWith("/en")) return "en";
+  if (pathname.startsWith("/ar")) return "ar";
+  return routing.defaultLocale;
+}
+
+function withLocaleHeader(response: NextResponse, locale: string) {
+  response.headers.set("x-next-locale", locale);
+  return response;
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -12,17 +23,21 @@ export function proxy(request: NextRequest) {
     const isLoginPage = pathname === "/admin/login";
 
     if (!token && !isLoginPage) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+      return withLocaleHeader(
+        NextResponse.redirect(new URL("/admin/login", request.url)),
+        routing.defaultLocale
+      );
     }
 
-    return NextResponse.next();
+    return withLocaleHeader(NextResponse.next(), routing.defaultLocale);
   }
 
   if (pathname.startsWith("/api")) {
     return NextResponse.next();
   }
 
-  return intlMiddleware(request);
+  const response = intlMiddleware(request);
+  return withLocaleHeader(response, resolveLocale(pathname));
 }
 
 export const config = {

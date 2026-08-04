@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 import { Logo } from "@/components/layout/logo";
 import { HeroSlider } from "@/components/home/hero-slider";
 import type { HeroSlide } from "@/lib/hero-slides";
@@ -65,9 +66,9 @@ export function HeroSection({
           </p>
 
           <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
-            <Link href="/contact" className="btn-primary justify-center shadow-[0_0_24px_var(--brand-glow)]">
+            <WhatsAppLink className="btn-primary justify-center shadow-[0_0_24px_var(--brand-glow)]">
               {t("ctaContact")}
-            </Link>
+            </WhatsAppLink>
             <Link href="/portfolio" className="btn-ghost justify-center border-white/20 bg-black/30 backdrop-blur-sm">
               {t("ctaPortfolio")}
               <Arrow className="h-4 w-4" />

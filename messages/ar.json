@@ -1,7 +1,8 @@
 {
   "metadata": {
     "title": "AM CNC WOOD DESIGN | تصميم ونحت خشبي فاخر",
-    "description": "شركة AM CNC WOOD DESIGN - رواد في تصميم ونحت الخشب بالتقنية CNC. نقدم حلولاً فاخرة للأثاث والديكورات الخشبية."
+    "description": "شركة AM CNC WOOD DESIGN - رواد في تصميم ونحت الخشب بالتقنية CNC. نقدم حلولاً فاخرة للأثاث والديكورات الخشبية.",
+    "keywords": "CNC, نحت خشب, تصميم خشبي, أثاث مخصص, ديكورات خشبية, AM CNC, wood carving, custom furniture, luxury wood design, Riyadh"
   },
   "nav": {
     "home": "الرئيسية",
@@ -163,7 +164,8 @@
     "error": "حدث خطأ، يرجى المحاولة مرة أخرى",
     "address": "العنوان",
     "workingHours": "ساعات العمل",
-    "followUs": "تابعنا"
+    "followUs": "تابعنا",
+    "socialLinksHint": "أضف روابط التواصل من لوحة التحكم ← روابط التواصل"
   },
   "footer": {
     "description": "AM CNC WOOD DESIGN - رواد في تصميم ونحت الخشب بالتقنية CNC",
@@ -176,6 +178,7 @@
     "readMore": "اقرأ المزيد",
     "backToTop": "العودة للأعلى",
     "back": "رجوع",
+    "skipToContent": "تخطي إلى المحتوى",
     "darkMode": "الوضع الداكن",
     "lightMode": "الوضع النهاري",
     "language": "English",

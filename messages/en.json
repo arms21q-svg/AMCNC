@@ -1,7 +1,8 @@
 {
   "metadata": {
     "title": "AM CNC WOOD DESIGN | Luxury CNC Wood Design",
-    "description": "AM CNC WOOD DESIGN - Leaders in CNC wood design and carving. We deliver luxury solutions for furniture and wooden decorations."
+    "description": "AM CNC WOOD DESIGN - Leaders in CNC wood design and carving. We deliver luxury solutions for furniture and wooden decorations.",
+    "keywords": "CNC wood, wood carving, custom furniture, luxury wood design, wooden decorations, AM CNC, Saudi Arabia, interior woodwork"
   },
   "nav": {
     "home": "Home",
@@ -163,7 +164,8 @@
     "error": "An error occurred, please try again",
     "address": "Address",
     "workingHours": "Working Hours",
-    "followUs": "Follow Us"
+    "followUs": "Follow Us",
+    "socialLinksHint": "Add social links from Admin → Social Links"
   },
   "footer": {
     "description": "AM CNC WOOD DESIGN - Leaders in CNC wood design and carving",
@@ -176,6 +178,7 @@
     "readMore": "Read More",
     "backToTop": "Back to Top",
     "back": "Back",
+    "skipToContent": "Skip to content",
     "darkMode": "Dark Mode",
     "lightMode": "Light Mode",
     "language": "العربية",

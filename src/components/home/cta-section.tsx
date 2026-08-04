@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 
 export function CTASection() {
   const t = useTranslations("cta");
@@ -21,9 +21,9 @@ export function CTASection() {
             {t("title")}
           </h2>
           <p className="mt-4 text-muted">{t("subtitle")}</p>
-          <Link href="/contact" className="btn-primary mt-8 inline-flex">
+          <WhatsAppLink className="btn-primary mt-8 inline-flex">
             {t("button")}
-          </Link>
+          </WhatsAppLink>
         </motion.div>
       </div>
     </section>

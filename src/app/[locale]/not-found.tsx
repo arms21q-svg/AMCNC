@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/layout/logo";
+
+export const metadata: Metadata = {
+  title: "404",
+  robots: { index: false, follow: false },
+};
 
 export default async function NotFoundPage() {
   const t = await getTranslations("common");

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { comparePassword, signToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { cookies } from "next/headers";
 
 const loginSchema = z.object({
@@ -10,6 +11,16 @@ const loginSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rate = checkRateLimit(`login:${ip}`, 10, 15 * 60_000);
+
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many login attempts. Please try again later." },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { email, password } = loginSchema.parse(body);

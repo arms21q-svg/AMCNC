@@ -1,8 +1,11 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Logo } from "@/components/layout/logo";
 import { Users, Briefcase, Medal, TreePine } from "lucide-react";
+import { useSiteData } from "@/components/layout/site-data-context";
+import { getFloatingIcon } from "@/lib/floating-link-ui";
+import { SOCIAL_PLATFORM_LABELS_AR } from "@/lib/admin-labels";
 
 const stats = [
   { value: "250+", key: "clients", icon: Users },
@@ -11,16 +14,12 @@ const stats = [
   { value: "100%", key: "sustainable", icon: TreePine },
 ] as const;
 
-const socialLinks = [
-  { name: "Instagram", href: "https://instagram.com", label: "Ig" },
-  { name: "Facebook", href: "https://facebook.com", label: "Fb" },
-  { name: "YouTube", href: "https://youtube.com", label: "Yt" },
-];
-
 export function HomeFooter() {
   const t = useTranslations("stats");
   const footer = useTranslations("footer");
   const hero = useTranslations("hero");
+  const locale = useLocale();
+  const { socialLinks } = useSiteData();
 
   return (
     <footer className="border-t border-border bg-[#050505]">
@@ -47,20 +46,30 @@ export function HomeFooter() {
             <p className="tagline">{hero("tagline")}</p>
             <p className="max-w-xs text-xs text-muted">{footer("description")}</p>
           </div>
-          <div className="flex gap-3">
-            {socialLinks.map((s) => (
-              <a
-                key={s.name}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={s.name}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-xs text-muted transition-colors hover:border-brand-green hover:text-brand-green"
-              >
-                {s.label}
-              </a>
-            ))}
-          </div>
+          {socialLinks.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-3">
+              {socialLinks.map((link) => {
+                const Icon = getFloatingIcon(link.icon || link.platform);
+                const label =
+                  locale === "ar"
+                    ? SOCIAL_PLATFORM_LABELS_AR[link.platform] || link.platform
+                    : link.platform;
+
+                return (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:border-brand-green hover:text-brand-green"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

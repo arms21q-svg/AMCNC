@@ -7,6 +7,7 @@ import { Menu, X, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucid
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "./language-switcher";
 import { Logo } from "./logo";
+import { WhatsAppLink } from "@/components/ui/whatsapp-link";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -88,13 +89,10 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <Link
-            href="/contact"
-            className="inline-flex items-center justify-center rounded-md bg-brand-green px-2 py-1 text-[10px] font-semibold leading-tight text-black transition-all hover:bg-brand-green-light whitespace-nowrap sm:rounded-lg sm:px-2.5 sm:py-1.5 sm:text-[11px] lg:gap-1.5 lg:rounded-xl lg:px-4 lg:py-2 lg:text-xs"
-          >
+          <WhatsAppLink className="inline-flex items-center justify-center rounded-md bg-brand-green px-2 py-1 text-[10px] font-semibold leading-tight text-black transition-all hover:bg-brand-green-light whitespace-nowrap sm:rounded-lg sm:px-2.5 sm:py-1.5 sm:text-[11px] lg:gap-1.5 lg:rounded-xl lg:px-4 lg:py-2 lg:text-xs">
             {t("requestQuote")}
             <Arrow className="hidden h-3.5 w-3.5 lg:block" />
-          </Link>
+          </WhatsAppLink>
           <LanguageSwitcher />
           <Button
             variant="ghost"

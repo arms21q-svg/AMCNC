@@ -37,20 +37,37 @@ export async function seedDemoData() {
       "نستخدم أحدث تقنيات CNC لتقديم منتجات خشبية استثنائية تجمع بين الدقة والجمال والمتانة",
     hero_subtitle_en:
       "Latest CNC technology for exceptional wood products",
-    phone: "+9647700000000",
-    whatsapp: "9647700000000",
-    address_ar: "بغداد، العراق",
-    address_en: "Baghdad, Iraq",
+    phone: "+966500000000",
+    whatsapp: "966500000000",
+    email: "info@amcncwood.com",
+    address_ar: "الرياض، المملكة العربية السعودية",
+    address_en: "Riyadh, Saudi Arabia",
     maps_url: "",
   });
 
   await syncContactFloatingLinks({
-    phone: "+9647700000000",
-    whatsapp: "9647700000000",
-    addressAr: "بغداد، العراق",
-    addressEn: "Baghdad, Iraq",
+    phone: "+966500000000",
+    whatsapp: "966500000000",
+    addressAr: "الرياض، المملكة العربية السعودية",
+    addressEn: "Riyadh, Saudi Arabia",
     mapsUrl: "",
   });
+
+  const defaultSocial = [
+    { platform: "instagram", url: "https://instagram.com", order: 1 },
+    { platform: "facebook", url: "https://facebook.com", order: 2 },
+    { platform: "youtube", url: "https://youtube.com", order: 3 },
+  ];
+
+  for (const social of defaultSocial) {
+    const existing = await prisma.socialLink.findFirst({
+      where: { platform: social.platform },
+    });
+    if (existing) continue;
+    await prisma.socialLink.create({
+      data: { ...social, icon: social.platform, active: true },
+    });
+  }
 
   const demoProjects = [
     {

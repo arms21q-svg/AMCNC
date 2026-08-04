@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { getActiveServices } from "@/lib/services.server";
 import { BRAND_LOGO } from "@/lib/brand";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -14,7 +15,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "services" });
-  return { title: t("title"), description: t("subtitle") };
+  return buildPageMetadata({
+    locale,
+    path: "/services",
+    title: t("title"),
+    description: t("subtitle"),
+  });
 }
 
 export default async function ServicesPage({

@@ -1,9 +1,9 @@
-import { setRequestLocale } from "next-intl/server";
-import { getTranslations } from "next-intl/server";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { WhyUsSection } from "@/components/home/why-us-section";
 import { StatsSection } from "@/components/home/stats-section";
 import { CTASection } from "@/components/home/cta-section";
 import Image from "next/image";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -12,7 +12,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "about" });
-  return { title: t("title"), description: t("description") };
+  return buildPageMetadata({
+    locale,
+    path: "/about",
+    title: t("title"),
+    description: t("description"),
+  });
 }
 
 export default async function AboutPage({

@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeImageHash, findSimilarImages } from "@/lib/image-similarity";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rate = checkRateLimit(`image-search:${ip}`, 20, 60_000);
+
+  if (!rate.allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("image") as File | null;

@@ -1,4 +1,5 @@
 import { Cairo, Montserrat } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 
 const cairo = Cairo({
@@ -15,15 +16,19 @@ const montserrat = Montserrat({
   preload: false,
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  const locale = headersList.get("x-next-locale") || "ar";
+  const dir = locale === "ar" ? "rtl" : "ltr";
+
   return (
     <html
-      lang="ar"
-      dir="rtl"
+      lang={locale}
+      dir={dir}
       className="dark"
       suppressHydrationWarning
       data-scroll-behavior="smooth"

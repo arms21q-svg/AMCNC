@@ -32,6 +32,7 @@ const emptyForm = {
 const emptyContact = {
   phone: "",
   whatsapp: "",
+  email: "",
   address_ar: "",
   address_en: "",
   maps_url: "",
@@ -62,6 +63,7 @@ export function FloatingLinksManager() {
       setContact({
         phone: c.phone || "",
         whatsapp: c.whatsapp || "",
+        email: c.email || "",
         address_ar: c.addressAr || "",
         address_en: c.addressEn || "",
         maps_url: c.mapsUrl || "",
@@ -201,7 +203,17 @@ export function FloatingLinksManager() {
               <Input
                 value={contact.whatsapp}
                 onChange={(e) => setContact({ ...contact, whatsapp: e.target.value })}
-                placeholder="9647700000000"
+                placeholder="966500000000"
+                dir="ltr"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>{ADMIN.email}</Label>
+              <Input
+                type="email"
+                value={contact.email}
+                onChange={(e) => setContact({ ...contact, email: e.target.value })}
+                placeholder="info@amcncwood.com"
                 dir="ltr"
               />
             </div>

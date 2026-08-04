@@ -13,6 +13,7 @@ import {
   X,
   Images,
   Plus,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ const navItems = [
   { href: "/admin/projects", label: ADMIN.projects, icon: FolderOpen },
   { href: "/admin/images", label: ADMIN.mediaLibrary, icon: Images },
   { href: "/admin/floating-links", label: ADMIN.floatingButton, icon: Headphones },
+  { href: "/admin/social", label: ADMIN.socialLinks, icon: Share2 },
   { href: "/admin/messages", label: ADMIN.messages, icon: Mail },
 ];
 

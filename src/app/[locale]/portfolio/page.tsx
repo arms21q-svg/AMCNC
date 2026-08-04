@@ -5,6 +5,9 @@ import {
   getActiveCategories,
   getPublishedProjects,
 } from "@/lib/projects.server";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
@@ -14,10 +17,12 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "portfolio" });
 
-  return {
+  return buildPageMetadata({
+    locale,
+    path: "/portfolio",
     title: t("title"),
     description: t("subtitle"),
-  };
+  });
 }
 
 export default async function PortfolioPage({
