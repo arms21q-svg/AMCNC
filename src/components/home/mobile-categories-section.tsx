@@ -12,37 +12,37 @@ const categories = [
     key: "card1",
     image:
       "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80&fit=crop",
-    href: "/services",
+    href: "/portfolio",
   },
   {
     key: "card2",
     image:
       "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&q=80&fit=crop",
-    href: "/services",
+    href: "/portfolio",
   },
   {
     key: "card3",
     image:
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80&fit=crop",
-    href: "/services",
+    href: "/portfolio",
   },
   {
     key: "card4",
     image:
       "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80&fit=crop",
-    href: "/services",
+    href: "/portfolio",
   },
   {
     key: "card5",
     image:
       "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&q=80&fit=crop",
-    href: "/services",
+    href: "/portfolio",
   },
   {
     key: "card6",
     image:
       "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=600&q=80&fit=crop",
-    href: "/services",
+    href: "/portfolio",
   },
 ] as const;
 

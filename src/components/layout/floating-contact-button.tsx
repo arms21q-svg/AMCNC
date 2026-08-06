@@ -1,43 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useFloatingLinks } from "@/components/layout/floating-links-context";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Headphones, X, Sparkles, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FloatingLinkItem } from "@/lib/floating-links-defaults";
-import { getDefaultFloatingLinks } from "@/lib/floating-links-defaults";
 import { getFloatingColorClass, getFloatingIcon } from "@/lib/floating-link-ui";
-import { parseJsonResponse } from "@/lib/parse-json-response";
 
 export function FloatingContactButton() {
   const [open, setOpen] = useState(false);
-  const [links, setLinks] = useState<FloatingLinkItem[]>([]);
+  const { links } = useFloatingLinks();
   const t = useTranslations("common");
   const locale = useLocale();
-
-  useEffect(() => {
-    let active = true;
-
-    const frame = requestAnimationFrame(() => {
-      void (async () => {
-        try {
-          const res = await fetch("/api/floating-links");
-          const data = await parseJsonResponse<{ links?: FloatingLinkItem[] }>(res);
-          if (!active) return;
-          setLinks(data.links?.length ? data.links : getDefaultFloatingLinks());
-        } catch {
-          if (active) setLinks(getDefaultFloatingLinks());
-        }
-      })();
-    });
-
-    return () => {
-      active = false;
-      cancelAnimationFrame(frame);
-    };
-  }, []);
 
   const label = (link: FloatingLinkItem) =>
     locale === "ar" ? link.labelAr : link.labelEn;

@@ -64,15 +64,9 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   }
 }
 
-function warnDbUnavailable(label: string): void {
-  if (dbWarned) return;
+function warnDbUnavailable(): void {
+  if (dbWarned || !isDev) return;
   dbWarned = true;
-
-  if (isDev) {
-    console.warn(
-      `[${label}] Database slow or unavailable — using fallback. Check DIRECT_URL (port 5432).`
-    );
-  }
 }
 
 export async function safeDbQuery<T>(
@@ -95,7 +89,7 @@ export async function safeDbQuery<T>(
     }
 
     markDbUnavailable();
-    warnDbUnavailable(label);
+    warnDbUnavailable();
     await resetPrismaPool();
     return fallback;
   }

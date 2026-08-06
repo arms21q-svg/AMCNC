@@ -24,7 +24,6 @@ export function Footer() {
   const links = [
     { href: "/", key: "home" },
     { href: "/portfolio", key: "portfolio" },
-    { href: "/services", key: "services" },
     { href: "/about", key: "about" },
     { href: "/contact", key: "contact" },
   ] as const;

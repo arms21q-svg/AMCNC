@@ -13,7 +13,7 @@ const montserrat = Montserrat({
   variable: "--font-montserrat",
   display: "swap",
   weight: ["400", "500", "600", "700", "800"],
-  preload: false,
+  preload: true,
 });
 
 export default async function RootLayout({

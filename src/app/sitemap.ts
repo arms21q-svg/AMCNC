@@ -4,7 +4,7 @@ import { getSiteUrl } from "@/lib/seo";
 
 const baseUrl = getSiteUrl();
 
-const pages = ["", "/portfolio", "/services", "/about", "/contact"];
+const pages = ["", "/portfolio", "/about", "/contact"];
 const locales = ["ar", "en"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

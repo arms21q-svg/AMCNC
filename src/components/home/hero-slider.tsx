@@ -68,7 +68,9 @@ export function HeroSlider({ locale, slides, className }: HeroSliderProps) {
               alt={locale === "ar" ? slide.altAr : slide.altEn}
               fill
               priority={index === 0}
-              loading={index === 0 ? "eager" : "lazy"}
+              {...(index === 0
+                ? { loading: "eager" as const, fetchPriority: "high" as const }
+                : { loading: "lazy" as const })}
               sizes="100vw"
               className="object-cover object-center"
               unoptimized={slide.src.startsWith("/uploads/")}

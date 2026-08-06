@@ -22,6 +22,7 @@ import { Logo } from "@/components/layout/logo";
 import { Toaster } from "sonner";
 import { SetAdminRtl } from "@/components/admin/set-admin-rtl";
 import { ADMIN } from "@/lib/admin-labels";
+import { AdminDashboardNav } from "@/components/admin/admin-dashboard-nav";
 
 const navItems = [
   { href: "/admin", label: ADMIN.dashboard, icon: LayoutDashboard },
@@ -89,7 +90,9 @@ export default function AdminLayout({
               onClick={() => setSidebarOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
-                pathname === item.href
+                (item.href === "/admin"
+                  ? pathname === "/admin"
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`))
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-muted hover:bg-card hover:text-foreground"
               )}
@@ -143,10 +146,17 @@ export default function AdminLayout({
             {ADMIN.viewSite}
           </Link>
           <h1 className="font-display text-lg font-semibold ms-2 lg:ms-0">
-            {navItems.find((item) => item.href === pathname)?.label || ADMIN.dashboard}
+            {navItems.find((item) =>
+              item.href === "/admin"
+                ? pathname === "/admin"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`)
+            )?.label || ADMIN.dashboard}
           </h1>
         </header>
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">{children}</main>
+        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+          <AdminDashboardNav />
+          {children}
+        </main>
       </div>
       <Toaster richColors closeButton />
     </div>

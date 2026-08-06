@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header";
 import { LayoutExtras } from "@/components/layout/layout-extras";
 import { SkipToContent } from "@/components/layout/skip-to-content";
 import { SiteDataProvider } from "@/components/layout/site-data-context";
+import { FloatingLinksProvider } from "@/components/layout/floating-links-context";
 import { routing } from "@/i18n/routing";
 import { BRAND_LOGO, BRAND_NAME } from "@/lib/brand";
 import { getContactSettings } from "@/lib/site-settings.server";
@@ -111,12 +112,14 @@ export default async function LocaleLayout({
       ))}
       <SiteDataProvider contact={contact} socialLinks={socialLinks}>
         <NextIntlClientProvider messages={messages}>
-          <Header />
-          <main id="main-content" className="min-h-screen">
-            {children}
-          </main>
-          <LayoutExtras />
-          <AppToaster locale={locale} />
+          <FloatingLinksProvider>
+            <Header />
+            <main id="main-content" className="min-h-screen">
+              {children}
+            </main>
+            <LayoutExtras />
+            <AppToaster locale={locale} />
+          </FloatingLinksProvider>
         </NextIntlClientProvider>
       </SiteDataProvider>
     </>

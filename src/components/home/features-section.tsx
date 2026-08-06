@@ -49,7 +49,7 @@ export function FeaturesSection() {
               ))}
             </ul>
 
-            <Link href="/services" className="btn-primary mt-8 inline-flex">
+            <Link href="/portfolio" className="btn-primary mt-8 inline-flex">
               {t("cta")}
             </Link>
           </motion.div>
