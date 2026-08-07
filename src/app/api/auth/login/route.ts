@@ -3,7 +3,7 @@ import { z } from "zod";
 import { comparePassword, signToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { checkProductionEnv, formatEnvCheckError } from "@/lib/env-check";
+import { checkAuthEnv, formatEnvCheckError } from "@/lib/env-check";
 import { cookies } from "next/headers";
 
 const loginSchema = z.object({
@@ -12,7 +12,7 @@ const loginSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const envCheck = checkProductionEnv();
+  const envCheck = checkAuthEnv();
   if (!envCheck.ok) {
     return NextResponse.json(
       { error: formatEnvCheckError(envCheck), missing: envCheck.missing },

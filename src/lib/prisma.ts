@@ -20,6 +20,10 @@ function normalizeConnectionString(raw: string): string {
       parsed.searchParams.set("pgbouncer", "true");
     }
 
+    if (isSupabase && !parsed.searchParams.has("sslmode")) {
+      parsed.searchParams.set("sslmode", "require");
+    }
+
     if (isSupabase && !parsed.searchParams.has("connect_timeout")) {
       parsed.searchParams.set("connect_timeout", "30");
     }
@@ -54,9 +58,9 @@ function createPool(): Pool {
   return new Pool({
     connectionString,
     ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
-    max: process.env.NODE_ENV === "production" ? 5 : 2,
+    max: process.env.VERCEL ? 1 : process.env.NODE_ENV === "production" ? 3 : 2,
     idleTimeoutMillis: 20_000,
-    connectionTimeoutMillis: process.env.NODE_ENV === "production" ? 12_000 : 30_000,
+    connectionTimeoutMillis: process.env.VERCEL ? 30_000 : process.env.NODE_ENV === "production" ? 20_000 : 30_000,
   });
 }
 

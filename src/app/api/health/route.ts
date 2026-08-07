@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
-import { checkProductionEnv } from "@/lib/env-check";
+import {
+  checkAuthEnv,
+  checkProductionEnv,
+  getConfiguredEnvSummary,
+} from "@/lib/env-check";
 
 export async function GET() {
-  const env = checkProductionEnv();
+  const auth = checkAuthEnv();
+  const full = checkProductionEnv();
 
   return NextResponse.json({
-    status: env.ok ? "ok" : "misconfigured",
-    ...(env.ok ? {} : { missing: env.missing, hints: env.hints }),
+    status: auth.ok ? "ok" : "misconfigured",
+    auth: auth.ok ? "ready" : { missing: auth.missing, hints: auth.hints },
+    warnings: "warnings" in full ? full.warnings : [],
+    configured: getConfiguredEnvSummary(),
     timestamp: new Date().toISOString(),
   });
 }

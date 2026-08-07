@@ -2,7 +2,15 @@ import type { Metadata } from "next";
 import { BRAND_LOGO, BRAND_NAME } from "@/lib/brand";
 
 export function getSiteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configured && !configured.includes("localhost")) {
+    return configured.replace(/\/$/, "");
+  }
+  const vercel = process.env.VERCEL_URL?.trim();
+  if (vercel) {
+    return `https://${vercel.replace(/\/$/, "")}`;
+  }
+  return "http://localhost:3000";
 }
 
 export function buildAlternates(locale: string, path = "") {

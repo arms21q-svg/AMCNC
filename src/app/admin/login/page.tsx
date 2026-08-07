@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { AlertTriangle } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
 import { SetAdminRtl } from "@/components/admin/set-admin-rtl";
 import { ADMIN } from "@/lib/admin-labels";
@@ -21,13 +22,34 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
+type HealthResponse = {
+  status?: string;
+  auth?: { missing?: string[]; hints?: string[] } | string;
+};
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [envIssue, setEnvIssue] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/health");
+        const data = (await res.json()) as HealthResponse;
+        if (data.status === "misconfigured" && typeof data.auth === "object") {
+          const missing = data.auth.missing?.join("، ") || "JWT_SECRET / DATABASE_URL";
+          setEnvIssue(`إعدادات Vercel ناقصة: ${missing}`);
+        }
+      } catch {
+        // ignore — local dev
+      }
+    })();
+  }, []);
 
   const onSubmit = async (data: LoginForm) => {
     setLoading(true);
@@ -40,6 +62,7 @@ export default function AdminLoginPage() {
 
       const body = (await res.json().catch(() => null)) as {
         error?: string;
+        missing?: string[];
       } | null;
 
       if (res.status === 429) {
@@ -53,7 +76,13 @@ export default function AdminLoginPage() {
       }
 
       if (!res.ok) {
-        toast.error(body?.error || ADMIN.serverError);
+        const detail = body?.missing?.length
+          ? `${body.error}\n${body.missing.join(" • ")}`
+          : body?.error || ADMIN.serverError;
+        toast.error(detail, { duration: 8000 });
+        if (body?.missing?.length) {
+          setEnvIssue(body.missing.join("، "));
+        }
         return;
       }
 
@@ -76,6 +105,31 @@ export default function AdminLoginPage() {
           <p className="text-muted text-sm mt-2">{ADMIN.loginSubtitle}</p>
         </CardHeader>
         <CardContent>
+          {envIssue && (
+            <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">
+              <div className="flex gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div className="space-y-1 text-start">
+                  <p className="font-medium">{envIssue}</p>
+                  <p className="text-amber-200/80">
+                    Vercel → Settings → Environment Variables → Production
+                  </p>
+                  <p className="text-amber-200/80">
+                    أضف <code className="text-amber-100">JWT_SECRET</code> (64 حرف) و{" "}
+                    <code className="text-amber-100">DATABASE_URL</code> ثم Redeploy
+                  </p>
+                  <a
+                    href="/api/health"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block text-primary underline mt-1"
+                  >
+                    فحص /api/health
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <Label htmlFor="email">{ADMIN.email}</Label>

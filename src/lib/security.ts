@@ -1,7 +1,15 @@
 const DEV_JWT_FALLBACK = "dev-secret-change-me";
 
+function readSecret(): string | undefined {
+  return (
+    process.env.JWT_SECRET?.trim() ||
+    process.env.AUTH_SECRET?.trim() ||
+    undefined
+  );
+}
+
 export function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET?.trim();
+  const secret = readSecret();
 
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
