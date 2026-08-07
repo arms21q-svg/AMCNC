@@ -45,6 +45,8 @@ skills-lock.json
 # user uploads (keep folder only)
 /public/uploads/*
 !/public/uploads/.gitkeep
+/public/projects/*
+!/public/projects/.gitkeep
 
 # vercel
 .vercel

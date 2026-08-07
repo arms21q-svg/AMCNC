@@ -1,17 +1,14 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
 import bcrypt from "bcryptjs";
+import { createPgPool, getPgConnectionString } from "../src/lib/pg-pool";
 
-const connectionString =
-  process.env.DIRECT_URL || process.env.DATABASE_URL;
-
-if (!connectionString) {
+if (!getPgConnectionString()) {
   throw new Error("DATABASE_URL or DIRECT_URL is required for seeding");
 }
 
-const pool = new Pool({ connectionString });
+const pool = createPgPool();
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 

@@ -59,8 +59,6 @@ const nextConfig: NextConfig = {
       "lucide-react",
       "framer-motion",
       "sonner",
-      "@radix-ui/react-dialog",
-      "@radix-ui/react-dropdown-menu",
     ],
   },
   poweredByHeader: false,

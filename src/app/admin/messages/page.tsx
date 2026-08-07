@@ -1,13 +1,4 @@
-import dynamic from "next/dynamic";
-import { AdminTableSkeleton } from "@/components/admin/admin-table-skeleton";
-
-const MessagesManager = dynamic(
-  () =>
-    import("@/components/admin/messages-manager").then((m) => ({
-      default: m.MessagesManager,
-    })),
-  { loading: () => <AdminTableSkeleton rows={4} /> }
-);
+import { MessagesManager } from "@/components/admin/messages-manager";
 
 export default function AdminMessagesPage() {
   return <MessagesManager />;

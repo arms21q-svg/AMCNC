@@ -1,13 +1,4 @@
-import dynamic from "next/dynamic";
-import { AdminTableSkeleton } from "@/components/admin/admin-table-skeleton";
-
-const SocialLinksManager = dynamic(
-  () =>
-    import("@/components/admin/social-links-manager").then((m) => ({
-      default: m.SocialLinksManager,
-    })),
-  { loading: () => <AdminTableSkeleton rows={4} /> }
-);
+import { SocialLinksManager } from "@/components/admin/social-links-manager";
 
 export default function AdminSocialPage() {
   return <SocialLinksManager />;
