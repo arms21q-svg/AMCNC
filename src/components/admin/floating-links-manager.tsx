@@ -51,9 +51,9 @@ export function FloatingLinksManager() {
     try {
       const [linksData, settingsData] = await Promise.all([
         fetchJson<{ links?: FloatingLinkItem[] }>("/api/admin/floating-links"),
-        fetchJson<{ contact?: Record<string, string> }>("/api/admin/settings").catch(
-          () => ({ contact: {} as Record<string, string> })
-        ),
+        fetchJson<{ contact?: Record<string, string> }>(
+          "/api/admin/settings?section=contact"
+        ).catch(() => ({ contact: {} as Record<string, string> })),
       ]);
       if (!isActive()) return;
       setLinks(linksData.links || []);

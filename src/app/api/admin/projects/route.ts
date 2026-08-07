@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
-import { getAllProjectsAdmin } from "@/lib/projects.server";
+import { getProjectsAdminPaginated } from "@/lib/projects.server";
 import { syncProjectImages } from "@/lib/project-images.server";
+import { buildListMeta, parseAdminListQuery } from "@/lib/admin-query";
 
 const projectSchema = z.object({
   slug: z.string().min(1).max(120),
@@ -22,14 +23,19 @@ const projectSchema = z.object({
   galleryUrls: z.array(z.string()).optional(),
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const projects = await getAllProjectsAdmin();
-  return NextResponse.json({ projects });
+  const query = parseAdminListQuery(request.nextUrl.searchParams);
+  const { items, total } = await getProjectsAdminPaginated(query);
+
+  return NextResponse.json({
+    projects: items,
+    meta: buildListMeta(total, query.page, query.limit),
+  });
 }
 
 export async function POST(request: NextRequest) {

@@ -38,11 +38,29 @@ export default function AdminLoginPage() {
         body: JSON.stringify(data),
       });
 
-      if (!res.ok) throw new Error("Login failed");
+      const body = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+
+      if (res.status === 429) {
+        toast.error(body?.error || ADMIN.tooManyAttempts);
+        return;
+      }
+
+      if (res.status === 401) {
+        toast.error(ADMIN.invalidLogin);
+        return;
+      }
+
+      if (!res.ok) {
+        toast.error(body?.error || ADMIN.serverError);
+        return;
+      }
+
       toast.success(ADMIN.welcome);
       router.push("/admin");
     } catch {
-      toast.error(ADMIN.invalidLogin);
+      toast.error(ADMIN.serverError);
     } finally {
       setLoading(false);
     }

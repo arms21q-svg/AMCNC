@@ -15,10 +15,31 @@ import { HERO_SLIDE_SETTING_KEYS } from "@/lib/hero-slides";
 
 const settingsSchema = z.record(z.string(), z.string());
 
-export async function GET() {
+function pickKeys(map: Record<string, string>, keys: readonly string[]) {
+  const result: Record<string, string> = {};
+  for (const key of keys) {
+    if (map[key] !== undefined) result[key] = map[key];
+  }
+  return result;
+}
+
+export async function GET(request: NextRequest) {
   const admin = await requireAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const section = request.nextUrl.searchParams.get("section");
+
+  if (section === "homepage") {
+    const settings = await getSettingsMap();
+    const homepageKeys = [...HOMEPAGE_SETTING_KEYS, ...HERO_SLIDE_SETTING_KEYS];
+    return NextResponse.json({ settings: pickKeys(settings, homepageKeys) });
+  }
+
+  if (section === "contact") {
+    const contact = await getContactSettings();
+    return NextResponse.json({ contact });
   }
 
   const [settings, contact] = await Promise.all([

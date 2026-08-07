@@ -1,6 +1,7 @@
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyToken } from "@/lib/auth";
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -15,7 +16,18 @@ function withLocaleHeader(response: NextResponse, locale: string) {
   return response;
 }
 
-export function proxy(request: NextRequest) {
+function loginRedirect(request: NextRequest, clearToken = false) {
+  const response = withLocaleHeader(
+    NextResponse.redirect(new URL("/admin/login", request.url)),
+    routing.defaultLocale
+  );
+  if (clearToken) {
+    response.cookies.delete("admin-token");
+  }
+  return response;
+}
+
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/admin")) {
@@ -23,10 +35,22 @@ export function proxy(request: NextRequest) {
     const isLoginPage = pathname === "/admin/login";
 
     if (!token && !isLoginPage) {
-      return withLocaleHeader(
-        NextResponse.redirect(new URL("/admin/login", request.url)),
-        routing.defaultLocale
-      );
+      return loginRedirect(request);
+    }
+
+    if (token) {
+      const payload = await verifyToken(token);
+
+      if (!payload && !isLoginPage) {
+        return loginRedirect(request, true);
+      }
+
+      if (payload && isLoginPage) {
+        return withLocaleHeader(
+          NextResponse.redirect(new URL("/admin", request.url)),
+          routing.defaultLocale
+        );
+      }
     }
 
     return withLocaleHeader(NextResponse.next(), routing.defaultLocale);

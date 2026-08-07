@@ -55,7 +55,13 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "sonner",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+    ],
   },
   poweredByHeader: false,
   compress: true,
@@ -74,6 +80,11 @@ const nextConfig: NextConfig = {
         destination: "/:locale/portfolio",
         permanent: true,
       },
+      { source: "/admin/categories", destination: "/admin/projects", permanent: false },
+      { source: "/admin/settings", destination: "/admin/floating-links", permanent: false },
+      { source: "/admin/seo", destination: "/admin", permanent: false },
+      { source: "/admin/backup", destination: "/admin", permanent: false },
+      { source: "/admin/users", destination: "/admin", permanent: false },
     ];
   },
 };

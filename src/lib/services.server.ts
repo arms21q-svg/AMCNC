@@ -2,21 +2,11 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { safeDbQuery } from "@/lib/safe-db";
 
-export type ServiceItem = Awaited<
-  ReturnType<typeof getActiveServices>
->[number];
+import type { AdminListQuery } from "@/lib/admin-query";
 
-export async function getActiveServices() {
-  return safeDbQuery(
-    () =>
-      prisma.service.findMany({
-        where: { active: true },
-        orderBy: { order: "asc" },
-      }),
-    [],
-    "services"
-  );
-}
+export type ServiceItem = Awaited<
+  ReturnType<typeof getAllServicesAdmin>
+>[number];
 
 export async function getAllServicesAdmin() {
   return safeDbQuery(
@@ -39,6 +29,36 @@ export async function getAdminStats() {
     },
     { projects: 0, services: 0, messages: 0, users: 0 },
     "admin-stats"
+  );
+}
+
+export async function getMessagesAdminPaginated(query: AdminListQuery) {
+  const where = query.q
+    ? {
+        OR: [
+          { name: { contains: query.q, mode: "insensitive" as const } },
+          { email: { contains: query.q, mode: "insensitive" as const } },
+          { subject: { contains: query.q, mode: "insensitive" as const } },
+          { message: { contains: query.q, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+
+  return safeDbQuery(
+    async () => {
+      const [items, total] = await Promise.all([
+        prisma.message.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip: query.skip,
+          take: query.limit,
+        }),
+        prisma.message.count({ where }),
+      ]);
+      return { items, total };
+    },
+    { items: [], total: 0 },
+    "admin-messages-paged"
   );
 }
 

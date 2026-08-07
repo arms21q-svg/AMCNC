@@ -40,7 +40,7 @@ export function HomepageManager() {
   const fetchData = useCallback(async (isActive: () => boolean) => {
     try {
       const data = await fetchJson<{ settings?: Record<string, string> }>(
-        "/api/admin/settings"
+        "/api/admin/settings?section=homepage"
       );
       if (isActive()) setForm(data.settings || {});
     } catch {

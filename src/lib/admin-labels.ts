@@ -41,6 +41,8 @@ export const ADMIN = {
   signingIn: "جاري الدخول...",
   welcome: "مرحباً بك!",
   invalidLogin: "بيانات الدخول غير صحيحة",
+  tooManyAttempts: "محاولات كثيرة. انتظر قليلاً ثم حاول مجدداً.",
+  serverError: "خطأ في الخادم أو قاعدة البيانات. راجع الإعدادات.",
   quickActions: "اختصارات سريعة",
   viewSite: "عرض الموقع",
   allProjects: "جميع الأعمال",
@@ -105,6 +107,12 @@ export const ADMIN = {
   featureOnHomeShortcut: "تمييز في الرئيسية",
   projectsShortcuts: "اختصارات الأعمال",
   projectsShortcutsHint: "أضف أعمالاً جديدة أو ارفع صوراً واستخدمها في معرض أعمالنا.",
+  searchPlaceholder: "بحث...",
+  clearSearch: "مسح البحث",
+  prevPage: "السابق",
+  nextPage: "التالي",
+  pageOf: (page: number, totalPages: number, total: number) =>
+    `صفحة ${page} من ${totalPages} (${total} سجل)`,
 } as const;
 
 export const ICON_LABELS_AR: Record<string, string> = {

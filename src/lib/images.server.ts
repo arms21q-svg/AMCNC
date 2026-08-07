@@ -71,6 +71,37 @@ export function validateUploadFile(file: File): string | null {
   return null;
 }
 
+import type { AdminListQuery } from "@/lib/admin-query";
+
+export async function listLibraryImagesPaginated(query: AdminListQuery) {
+  const where = query.q
+    ? {
+        OR: [
+          { url: { contains: query.q, mode: "insensitive" as const } },
+          { altAr: { contains: query.q, mode: "insensitive" as const } },
+          { altEn: { contains: query.q, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+
+  const [items, total] = await Promise.all([
+    prisma.image.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: query.skip,
+      take: query.limit,
+      include: {
+        project: {
+          select: { id: true, slug: true, titleAr: true, titleEn: true },
+        },
+      },
+    }),
+    prisma.image.count({ where }),
+  ]);
+
+  return { items, total };
+}
+
 export async function listLibraryImages(): Promise<SavedImageRow[]> {
   return prisma.image.findMany({
     orderBy: { createdAt: "desc" },

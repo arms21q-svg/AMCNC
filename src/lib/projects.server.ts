@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { safeDbQuery } from "@/lib/safe-db";
 import { DEMO_FEATURED_PROJECTS } from "@/lib/demo-projects";
 import type { ProjectListItem } from "@/lib/content-types";
+import type { AdminListQuery } from "@/lib/admin-query";
 
 export type { ProjectListItem };
 
@@ -100,6 +101,40 @@ export async function getActiveCategories() {
       }),
     [],
     "categories"
+  );
+}
+
+export async function getProjectsAdminPaginated(query: AdminListQuery) {
+  const where = query.q
+    ? {
+        OR: [
+          { titleAr: { contains: query.q, mode: "insensitive" as const } },
+          { titleEn: { contains: query.q, mode: "insensitive" as const } },
+          { slug: { contains: query.q, mode: "insensitive" as const } },
+          { client: { contains: query.q, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+
+  return safeDbQuery(
+    async () => {
+      const [items, total] = await Promise.all([
+        prisma.project.findMany({
+          where,
+          include: {
+            category: { select: { id: true, slug: true, nameAr: true, nameEn: true } },
+            _count: { select: { images: true } },
+          },
+          orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+          skip: query.skip,
+          take: query.limit,
+        }),
+        prisma.project.count({ where }),
+      ]);
+      return { items, total };
+    },
+    { items: [], total: 0 },
+    "admin-projects-paged"
   );
 }
 

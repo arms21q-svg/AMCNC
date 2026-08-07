@@ -56,7 +56,6 @@ Open [http://localhost:3000/ar](http://localhost:3000/ar) (Arabic) or [http://lo
 | Home | `/[locale]` |
 | Portfolio | `/[locale]/portfolio` |
 | Project Detail | `/[locale]/portfolio/[slug]` |
-| Services | `/[locale]/services` |
 | About | `/[locale]/about` |
 | Contact | `/[locale]/contact` |
 | Admin Dashboard | `/admin` |

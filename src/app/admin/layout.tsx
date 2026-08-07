@@ -23,6 +23,7 @@ import { Toaster } from "sonner";
 import { SetAdminRtl } from "@/components/admin/set-admin-rtl";
 import { ADMIN } from "@/lib/admin-labels";
 import { AdminDashboardNav } from "@/components/admin/admin-dashboard-nav";
+import { AdminImagesProvider } from "@/components/admin/admin-images-provider";
 
 const navItems = [
   { href: "/admin", label: ADMIN.dashboard, icon: LayoutDashboard },
@@ -154,8 +155,10 @@ export default function AdminLayout({
           </h1>
         </header>
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          <AdminDashboardNav />
-          {children}
+          <AdminImagesProvider>
+            <AdminDashboardNav />
+            {children}
+          </AdminImagesProvider>
         </main>
       </div>
       <Toaster richColors closeButton />

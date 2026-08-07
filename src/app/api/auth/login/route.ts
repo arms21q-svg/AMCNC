@@ -60,7 +60,38 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
+    const isProd = process.env.NODE_ENV === "production";
+
+    if (/JWT_SECRET|DATABASE_URL|DIRECT_URL|required/i.test(message)) {
+      return NextResponse.json(
+        {
+          error: isProd
+            ? "Server configuration error. Check DATABASE_URL and JWT_SECRET on Vercel."
+            : message,
+        },
+        { status: 500 }
+      );
+    }
+
+    if (/timeout|ECONNREFUSED|Can't reach database|Connection terminated/i.test(message)) {
+      return NextResponse.json(
+        {
+          error: isProd
+            ? "Database connection failed. Check Supabase and env vars."
+            : "Database connection failed. Check DIRECT_URL (port 5432) and run npm run db:seed.",
+        },
+        { status: 500 }
+      );
+    }
+
+    console.error("[auth/login]", error);
+    return NextResponse.json(
+      { error: isProd ? "Internal server error" : message },
+      { status: 500 }
+    );
   }
 }
 

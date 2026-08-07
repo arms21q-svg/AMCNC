@@ -10,10 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { slugify } from "@/lib/utils";
 import { ADMIN } from "@/lib/admin-labels";
-import { useMountFetch } from "@/hooks/use-mount-fetch";
 import { fetchJson } from "@/lib/fetch-json";
+import { useAdminList } from "@/hooks/use-admin-list";
+import { useSubmitLock } from "@/hooks/use-submit-lock";
+import { useMountFetch } from "@/hooks/use-mount-fetch";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { ImageLibraryDialog } from "@/components/admin/image-library-dialog";
+import { AdminSearch } from "@/components/admin/admin-search";
+import { AdminPagination } from "@/components/admin/admin-pagination";
+import { AdminTableSkeleton } from "@/components/admin/admin-table-skeleton";
 
 interface Category {
   id: string;
@@ -58,7 +63,6 @@ const emptyForm = {
 };
 
 export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean }) {
-  const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,24 +70,35 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
   const [showForm, setShowForm] = useState(openAddForm);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState<"cover" | "gallery" | null>(null);
+  const { runLocked } = useSubmitLock();
 
-  const fetchData = useCallback(async (isActive: () => boolean) => {
+  const {
+    items: projects,
+    meta,
+    loading,
+    setPage,
+    search,
+    setSearch,
+    reload: load,
+  } = useAdminList<"projects", ProjectRow>({
+    endpoint: "/api/admin/projects",
+    listKey: "projects",
+    limit: 20,
+    onError: () => toast.error("تعذر تحميل الأعمال"),
+  });
+
+  const fetchCategories = useCallback(async (isActive: () => boolean) => {
     try {
-      const [projectsData, categoriesData] = await Promise.all([
-        fetchJson<{ projects?: ProjectRow[] }>("/api/admin/projects"),
-        fetchJson<{ categories?: Category[] }>("/api/admin/categories").catch(
-          () => ({ categories: [] as Category[] })
-        ),
-      ]);
-      if (!isActive()) return;
-      setProjects(projectsData.projects || []);
-      setCategories(categoriesData.categories || []);
+      const categoriesData = await fetchJson<{ categories?: Category[] }>(
+        "/api/admin/categories"
+      ).catch(() => ({ categories: [] as Category[] }));
+      if (isActive()) setCategories(categoriesData.categories || []);
     } catch {
-      if (isActive()) toast.error("تعذر تحميل الأعمال");
+      if (isActive()) toast.error("تعذر تحميل الفئات");
     }
   }, []);
 
-  const { loading, reload: load } = useMountFetch(fetchData);
+  useMountFetch(fetchCategories);
 
   const resetForm = () => {
     setForm({ ...emptyForm, order: projects.length + 1 });
@@ -128,39 +143,41 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    try {
-      const payload = {
-        ...form,
-        year: form.year ? Number(form.year) : null,
-        client: form.client || null,
-        location: form.location || null,
-        categoryId: form.categoryId || null,
-        coverUrl: form.coverUrl || null,
-        galleryUrls: form.galleryUrls.filter(Boolean),
-      };
+    await runLocked(async () => {
+      setSaving(true);
+      try {
+        const payload = {
+          ...form,
+          year: form.year ? Number(form.year) : null,
+          client: form.client || null,
+          location: form.location || null,
+          categoryId: form.categoryId || null,
+          coverUrl: form.coverUrl || null,
+          galleryUrls: form.galleryUrls.filter(Boolean),
+        };
 
-      const res = editingId
-        ? await fetch(`/api/admin/projects/${editingId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          })
-        : await fetch("/api/admin/projects", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
+        const res = editingId
+          ? await fetch(`/api/admin/projects/${editingId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            })
+          : await fetch("/api/admin/projects", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
 
-      if (!res.ok) throw new Error("Save failed");
-      toast.success(editingId ? "تم تحديث العمل" : "تم إضافة العمل");
-      resetForm();
-      load();
-    } catch {
-      toast.error("فشل الحفظ");
-    } finally {
-      setSaving(false);
-    }
+        if (!res.ok) throw new Error("Save failed");
+        toast.success(editingId ? "تم تحديث العمل" : "تم إضافة العمل");
+        resetForm();
+        await load();
+      } catch {
+        toast.error("فشل الحفظ");
+      } finally {
+        setSaving(false);
+      }
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -403,15 +420,19 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle>{ADMIN.allProjects} ({projects.length})</CardTitle>
+        <CardHeader className="space-y-4">
+          <CardTitle>
+            {ADMIN.allProjects} ({meta.total})
+          </CardTitle>
+          <AdminSearch value={search} onChange={setSearch} placeholder="بحث في الأعمال..." />
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-muted text-sm">{ADMIN.loading}</p>
+            <AdminTableSkeleton rows={4} />
           ) : projects.length === 0 ? (
             <p className="text-muted text-sm">{ADMIN.noProjects}</p>
           ) : (
+            <>
             <div className="space-y-3">
               {projects.map((project) => (
                 <div
@@ -462,6 +483,8 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
                 </div>
               ))}
             </div>
+            <AdminPagination meta={meta} onPageChange={setPage} disabled={loading} />
+            </>
           )}
         </CardContent>
       </Card>
