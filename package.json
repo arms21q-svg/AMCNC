@@ -13,6 +13,8 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "npx tsx prisma/seed.ts",
+    "db:status": "node scripts/db-status.mjs",
+    "db:fix": "node scripts/fix-db.mjs",
     "logo:prepare": "node scripts/prepare-logo.mjs",
     "env:check": "node scripts/check-env.mjs",
     "postinstall": "prisma generate"

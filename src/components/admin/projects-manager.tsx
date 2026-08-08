@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Star, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -430,7 +431,21 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
           {loading ? (
             <AdminTableSkeleton rows={4} />
           ) : projects.length === 0 ? (
-            <p className="text-muted text-sm">{ADMIN.noProjects}</p>
+            <div className="space-y-3 text-sm">
+              <p className="text-muted">{ADMIN.noProjects}</p>
+              <p className="text-muted">
+                قاعدة البيانات على Vercel فارغة — الأعمال المحلية (10) لا تُنسخ تلقائياً.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" onClick={() => setShowForm(true)}>
+                  <Plus className="h-4 w-4" />
+                  {ADMIN.addProject}
+                </Button>
+                <Button type="button" size="sm" variant="outline" asChild>
+                  <Link href="/admin">{ADMIN.seedButton}</Link>
+                </Button>
+              </div>
+            </div>
           ) : (
             <>
             <div className="space-y-3">
