@@ -10,7 +10,14 @@ export async function POST(request: NextRequest) {
   try {
     const storageError = getStorageSetupError();
     if (storageError) {
-      return NextResponse.json({ error: storageError }, { status: 503 });
+      return NextResponse.json(
+        {
+          error: storageError,
+          code: "STORAGE_NOT_CONFIGURED",
+          hint: "Add SUPABASE_SERVICE_ROLE_KEY and SUPABASE_STORAGE_BUCKET on Vercel, then redeploy.",
+        },
+        { status: 503 }
+      );
     }
 
     const formData = await request.formData();

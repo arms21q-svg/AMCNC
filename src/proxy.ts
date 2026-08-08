@@ -30,6 +30,11 @@ function loginRedirect(request: NextRequest, clearToken = false) {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Root files requested by crawlers — never treat as [locale].
+  if (pathname === "/ads.txt" || pathname === "/robots.txt" || pathname === "/sitemap.xml") {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/admin")) {
     const token = request.cookies.get("admin-token")?.value;
     const isLoginPage = pathname === "/admin/login";

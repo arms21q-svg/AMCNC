@@ -8,6 +8,8 @@ import { SkipToContent } from "@/components/layout/skip-to-content";
 import { SiteDataProvider } from "@/components/layout/site-data-context";
 import { FloatingLinksProvider } from "@/components/layout/floating-links-context";
 import { routing } from "@/i18n/routing";
+import { assertAppLocale } from "@/lib/locale";
+import { getMessagesForLocale } from "@/lib/messages.server";
 import { BRAND_LOGO, BRAND_NAME } from "@/lib/brand";
 import { getContactSettings } from "@/lib/site-settings.server";
 import { getActiveSocialLinks } from "@/lib/social-links.server";
@@ -18,6 +20,8 @@ import {
   getSiteUrl,
 } from "@/lib/seo";
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
@@ -27,8 +31,9 @@ export async function generateMetadata({
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
-  const messages = (await import(`../../../messages/${locale}.json`)).default;
+  const { locale: rawLocale } = await params;
+  const locale = assertAppLocale(rawLocale);
+  const messages = getMessagesForLocale(locale);
 
   return {
     title: {
@@ -82,7 +87,8 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+  const locale = assertAppLocale(rawLocale);
   setRequestLocale(locale);
   const [messages, contact, socialLinks, tCommon] = await Promise.all([
     getMessages(),
