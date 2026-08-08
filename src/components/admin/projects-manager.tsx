@@ -433,18 +433,26 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
           ) : projects.length === 0 ? (
             <div className="space-y-3 text-sm">
               <p className="text-muted">{ADMIN.noProjects}</p>
-              <p className="text-muted">
-                قاعدة البيانات على Vercel فارغة — الأعمال المحلية (10) لا تُنسخ تلقائياً.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" size="sm" onClick={() => setShowForm(true)}>
-                  <Plus className="h-4 w-4" />
-                  {ADMIN.addProject}
+              {meta.total === 0 ? (
+                <>
+                  <p className="text-muted">
+                    لا توجد أعمال في قاعدة البيانات الحالية — أضف عملاً جديداً من الزر أعلاه.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" size="sm" onClick={() => setShowForm(true)}>
+                      <Plus className="h-4 w-4" />
+                      {ADMIN.addProject}
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" asChild>
+                      <Link href="/admin">{ADMIN.seedButton}</Link>
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Button type="button" size="sm" variant="outline" onClick={() => load()}>
+                  إعادة تحميل القائمة
                 </Button>
-                <Button type="button" size="sm" variant="outline" asChild>
-                  <Link href="/admin">{ADMIN.seedButton}</Link>
-                </Button>
-              </div>
+              )}
             </div>
           ) : (
             <>
