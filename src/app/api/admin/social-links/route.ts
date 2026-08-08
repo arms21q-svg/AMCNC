@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/require-admin";
+import { getAdminOr401 } from "@/lib/require-admin";
 import { getAllSocialLinksAdmin } from "@/lib/social-links.server";
 
 const linkSchema = z.object({
@@ -13,20 +13,16 @@ const linkSchema = z.object({
 });
 
 export async function GET() {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   const links = await getAllSocialLinksAdmin();
   return NextResponse.json({ links });
 }
 
 export async function POST(request: NextRequest) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   try {
     const body = linkSchema.parse(await request.json());

@@ -1,15 +1,32 @@
 import type { Metadata } from "next";
 import { BRAND_LOGO, BRAND_NAME } from "@/lib/brand";
 
+function readProductionHost(): string | undefined {
+  const production =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (production) {
+    return production.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  }
+  return undefined;
+}
+
 export function getSiteUrl(): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (configured && !configured.includes("localhost")) {
     return configured.replace(/\/$/, "");
   }
+
+  const productionHost = readProductionHost();
+  if (productionHost) {
+    return `https://${productionHost}`;
+  }
+
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) {
-    return `https://${vercel.replace(/\/$/, "")}`;
+    return `https://${vercel.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
   }
+
   return "http://localhost:3000";
 }
 

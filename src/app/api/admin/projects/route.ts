@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/require-admin";
+import { getAdminOr401 } from "@/lib/require-admin";
 import { getProjectsAdminPaginated } from "@/lib/projects.server";
 import { syncProjectImages } from "@/lib/project-images.server";
 import { buildListMeta, parseAdminListQuery } from "@/lib/admin-query";
@@ -24,10 +24,8 @@ const projectSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   const query = parseAdminListQuery(request.nextUrl.searchParams);
   const { items, total } = await getProjectsAdminPaginated(query);
@@ -39,10 +37,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   try {
     const body = projectSchema.parse(await request.json());

@@ -84,8 +84,8 @@ export function MediaLibrary({ onSelect, selectMode = false }: MediaLibraryProps
       toast.success("تم رفع الصورة إلى المحفوظات");
       cache?.invalidate();
       await refresh();
-    } catch {
-      toast.error("فشل رفع الصورة");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "فشل رفع الصورة");
     } finally {
       setUploading(false);
     }

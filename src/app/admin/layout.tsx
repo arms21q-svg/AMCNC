@@ -2,19 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  LayoutDashboard,
-  Home,
-  FolderOpen,
-  Mail,
-  Headphones,
-  LogOut,
-  Menu,
-  X,
-  Images,
-  Plus,
-  Share2,
-} from "lucide-react";
+import { LogOut, Menu, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -22,18 +10,10 @@ import { Logo } from "@/components/layout/logo";
 import { Toaster } from "sonner";
 import { SetAdminRtl } from "@/components/admin/set-admin-rtl";
 import { ADMIN } from "@/lib/admin-labels";
+import { ADMIN_NAV_ITEMS, isAdminNavActive } from "@/lib/admin-nav-config";
 import { AdminDashboardNav } from "@/components/admin/admin-dashboard-nav";
 import { AdminImagesProvider } from "@/components/admin/admin-images-provider";
-
-const navItems = [
-  { href: "/admin", label: ADMIN.dashboard, icon: LayoutDashboard },
-  { href: "/admin/homepage", label: ADMIN.homepage, icon: Home },
-  { href: "/admin/projects", label: ADMIN.projects, icon: FolderOpen },
-  { href: "/admin/images", label: ADMIN.mediaLibrary, icon: Images },
-  { href: "/admin/floating-links", label: ADMIN.floatingButton, icon: Headphones },
-  { href: "/admin/social", label: ADMIN.socialLinks, icon: Share2 },
-  { href: "/admin/messages", label: ADMIN.messages, icon: Mail },
-];
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export default function AdminLayout({
   children,
@@ -83,7 +63,7 @@ export default function AdminLayout({
         </div>
 
         <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-140px)]">
-          {navItems.map((item) => (
+          {ADMIN_NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -91,9 +71,7 @@ export default function AdminLayout({
               onClick={() => setSidebarOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
-                (item.href === "/admin"
-                  ? pathname === "/admin"
-                  : pathname === item.href || pathname.startsWith(`${item.href}/`))
+                isAdminNavActive(pathname, item.href, item.exact)
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-muted hover:bg-card hover:text-foreground"
               )}
@@ -147,17 +125,17 @@ export default function AdminLayout({
             {ADMIN.viewSite}
           </Link>
           <h1 className="font-display text-lg font-semibold ms-2 lg:ms-0">
-            {navItems.find((item) =>
-              item.href === "/admin"
-                ? pathname === "/admin"
-                : pathname === item.href || pathname.startsWith(`${item.href}/`)
+            {ADMIN_NAV_ITEMS.find((item) =>
+              isAdminNavActive(pathname, item.href, item.exact)
             )?.label || ADMIN.dashboard}
           </h1>
         </header>
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <AdminImagesProvider>
             <AdminDashboardNav />
-            {children}
+            <ErrorBoundary fallbackTitle="خطأ في تحميل المحتوى">
+              {children}
+            </ErrorBoundary>
           </AdminImagesProvider>
         </main>
       </div>

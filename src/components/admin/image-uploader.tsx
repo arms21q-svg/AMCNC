@@ -54,8 +54,8 @@ export function ImageUploader({
       const data = await parseJsonResponse<{ url: string; id: string }>(res);
       onChange(data.url);
       toast.success("تم رفع الصورة");
-    } catch {
-      toast.error("فشل رفع الصورة");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "فشل رفع الصورة");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";

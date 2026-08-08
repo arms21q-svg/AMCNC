@@ -5,8 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { Logo } from "./logo";
 import { useSiteData } from "./site-data-context";
-import { getFloatingIcon } from "@/lib/floating-link-ui";
-import { SOCIAL_PLATFORM_LABELS_AR } from "@/lib/admin-labels";
+import { SocialLinksRow } from "@/components/layout/social-links-row";
 
 export function Footer() {
   const t = useTranslations("footer");
@@ -112,28 +111,7 @@ export function Footer() {
               {contactT("followUs")}
             </h3>
             {socialLinks.length > 0 ? (
-              <div className="flex flex-wrap gap-3">
-                {socialLinks.map((link) => {
-                  const Icon = getFloatingIcon(link.icon || link.platform);
-                  const label =
-                    locale === "ar"
-                      ? SOCIAL_PLATFORM_LABELS_AR[link.platform] || link.platform
-                      : link.platform;
-
-                  return (
-                    <a
-                      key={link.id}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={label}
-                      className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:border-brand-gold hover:text-brand-gold"
-                    >
-                      <Icon className="h-4 w-4" />
-                    </a>
-                  );
-                })}
-              </div>
+              <SocialLinksRow links={socialLinks} locale={locale} />
             ) : (
               <p className="text-sm text-muted">{contactT("socialLinksHint")}</p>
             )}

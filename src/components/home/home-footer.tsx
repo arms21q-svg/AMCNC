@@ -4,8 +4,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Logo } from "@/components/layout/logo";
 import { Users, Briefcase, Medal, TreePine } from "lucide-react";
 import { useSiteData } from "@/components/layout/site-data-context";
-import { getFloatingIcon } from "@/lib/floating-link-ui";
-import { SOCIAL_PLATFORM_LABELS_AR } from "@/lib/admin-labels";
+import { SocialLinksRow } from "@/components/layout/social-links-row";
 
 const stats = [
   { value: "250+", key: "clients", icon: Users },
@@ -46,30 +45,12 @@ export function HomeFooter() {
             <p className="tagline">{hero("tagline")}</p>
             <p className="max-w-xs text-xs text-muted">{footer("description")}</p>
           </div>
-          {socialLinks.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-3">
-              {socialLinks.map((link) => {
-                const Icon = getFloatingIcon(link.icon || link.platform);
-                const label =
-                  locale === "ar"
-                    ? SOCIAL_PLATFORM_LABELS_AR[link.platform] || link.platform
-                    : link.platform;
-
-                return (
-                  <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={label}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:border-brand-green hover:text-brand-green"
-                  >
-                    <Icon className="h-4 w-4" />
-                  </a>
-                );
-              })}
-            </div>
-          )}
+          <SocialLinksRow
+            links={socialLinks}
+            locale={locale}
+            className="justify-center md:justify-end"
+            iconClassName="h-9 w-9 hover:border-brand-green hover:text-brand-green"
+          />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/require-admin";
+import { getAdminOr401 } from "@/lib/require-admin";
 import {
   getContactSettings,
   getSettingsMap,
@@ -24,10 +24,8 @@ function pickKeys(map: Record<string, string>, keys: readonly string[]) {
 }
 
 export async function GET(request: NextRequest) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   const section = request.nextUrl.searchParams.get("section");
 
@@ -51,10 +49,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   try {
     const body = await request.json();

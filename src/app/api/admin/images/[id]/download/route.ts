@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/require-admin";
+import { getAdminOr401 } from "@/lib/require-admin";
 import { getImageById } from "@/lib/images.server";
 import { readImageBuffer } from "@/lib/storage.server";
 
@@ -7,10 +7,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   const { id } = await params;
   const image = await getImageById(id);

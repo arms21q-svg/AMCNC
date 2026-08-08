@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,7 +27,6 @@ type HealthResponse = {
 };
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [envIssue, setEnvIssue] = useState<string | null>(null);
 
@@ -56,6 +54,7 @@ export default function AdminLoginPage() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -87,7 +86,9 @@ export default function AdminLoginPage() {
       }
 
       toast.success(ADMIN.welcome);
-      router.push("/admin");
+      // Full reload ensures Set-Cookie is applied before /admin middleware runs.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- auth cookie timing
+      window.location.assign("/admin");
     } catch {
       toast.error(ADMIN.serverError);
     } finally {

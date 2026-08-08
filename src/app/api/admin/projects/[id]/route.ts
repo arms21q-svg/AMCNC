@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/require-admin";
+import { getAdminOr401 } from "@/lib/require-admin";
 import { syncProjectImages } from "@/lib/project-images.server";
 
 const projectSchema = z.object({
@@ -30,10 +30,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   const { id } = await params;
   const project = await prisma.project.findUnique({
@@ -56,10 +54,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   const { id } = await params;
 
@@ -79,10 +75,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   const { id } = await params;
 
@@ -123,10 +117,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   const { id } = await params;
 

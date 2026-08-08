@@ -42,7 +42,7 @@ export function ProjectsSection({ projects }: { projects: ProjectListItem[] }) {
             return (
               <motion.div
                 key={project.id}
-                initial={{ opacity: 0, y: 16 }}
+                initial={false}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.08 }}

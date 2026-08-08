@@ -113,6 +113,11 @@ export const ADMIN = {
   nextPage: "التالي",
   pageOf: (page: number, totalPages: number, total: number) =>
     `صفحة ${page} من ${totalPages} (${total} سجل)`,
+  loadFailed: "تعذر تحميل البيانات",
+  saveFailed: "فشل الحفظ",
+  deleteFailed: "فشل الحذف",
+  uploadFailed: "فشل رفع الصورة",
+  actionFailed: "تعذر إتمام العملية",
 } as const;
 
 export const ICON_LABELS_AR: Record<string, string> = {

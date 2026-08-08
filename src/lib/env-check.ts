@@ -1,4 +1,5 @@
 import "server-only";
+import { isStorageConfigured, getStorageBucketName } from "@/lib/storage.server";
 
 export type EnvCheckResult =
   | { ok: true }
@@ -77,6 +78,16 @@ export function checkProductionEnv(): EnvCheckResult & {
     warnings.push("NEXT_PUBLIC_SUPABASE_URL — required for image uploads");
   }
 
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    warnings.push(
+      "SUPABASE_SERVICE_ROLE_KEY — required for image uploads (Supabase → Settings → API)"
+    );
+  }
+
+  if (!process.env.SUPABASE_STORAGE_BUCKET?.trim()) {
+    warnings.push('SUPABASE_STORAGE_BUCKET — optional, default: "project-images"');
+  }
+
   return warnings.length > 0 ? { ok: true, warnings } : { ok: true };
 }
 
@@ -96,6 +107,8 @@ export function getConfiguredEnvSummary() {
     hasJwt: Boolean(readJwtSecret()),
     jwtLength: readJwtSecret()?.length ?? 0,
     hasSiteUrl: Boolean(process.env.NEXT_PUBLIC_SITE_URL?.trim()),
+    hasStorage: isStorageConfigured(),
+    storageBucket: getStorageBucketName(),
     vercelUrl: process.env.VERCEL_URL ?? null,
     nodeEnv: process.env.NODE_ENV ?? null,
   };

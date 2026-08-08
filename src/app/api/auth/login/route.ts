@@ -4,7 +4,19 @@ import { comparePassword, signToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { checkAuthEnv, formatEnvCheckError } from "@/lib/env-check";
-import { cookies } from "next/headers";
+
+const ADMIN_COOKIE = "admin-token";
+const ADMIN_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+function adminCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    maxAge: ADMIN_COOKIE_MAX_AGE,
+    path: "/",
+  };
+}
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -52,19 +64,12 @@ export async function POST(request: NextRequest) {
       role: user.role,
     });
 
-    const cookieStore = await cookies();
-    cookieStore.set("admin-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    });
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     });
+    response.cookies.set(ADMIN_COOKIE, token, adminCookieOptions());
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Validation failed" }, { status: 400 });
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE() {
-  const cookieStore = await cookies();
-  cookieStore.delete("admin-token");
-  return NextResponse.json({ success: true });
+  const response = NextResponse.json({ success: true });
+  response.cookies.delete(ADMIN_COOKIE);
+  return response;
 }

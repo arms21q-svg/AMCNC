@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/require-admin";
+import { getAdminOr401 } from "@/lib/require-admin";
 import { saveUploadedImage, validateUploadFile } from "@/lib/images.server";
+import { getStorageSetupError } from "@/lib/storage.server";
 
 export async function POST(request: NextRequest) {
-  const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getAdminOr401();
+  if (admin instanceof NextResponse) return admin;
 
   try {
+    const storageError = getStorageSetupError();
+    if (storageError) {
+      return NextResponse.json({ error: storageError }, { status: 503 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const folder = (formData.get("folder") as string) || "uploads";
@@ -40,6 +44,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("[upload]", error);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    const message =
+      error instanceof Error ? error.message : "Upload failed";
+    const status = /غير مضاف|غير مهيأ|Bucket/i.test(message) ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -8,6 +8,27 @@ const BUCKET = process.env.SUPABASE_STORAGE_BUCKET || "project-images";
 
 let supabaseAdmin: SupabaseClient | null = null;
 
+export function isStorageConfigured(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
+      process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  );
+}
+
+export function getStorageBucketName(): string {
+  return BUCKET;
+}
+
+export function getStorageSetupError(): string | null {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()) {
+    return "NEXT_PUBLIC_SUPABASE_URL غير مضاف في Vercel";
+  }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    return "SUPABASE_SERVICE_ROLE_KEY غير مضاف في Vercel (Supabase → Settings → API → service_role)";
+  }
+  return null;
+}
+
 function getSupabaseAdmin(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -50,10 +71,22 @@ export async function uploadImageBuffer(
       upsert: false,
     });
     if (error) {
+      if (/bucket not found/i.test(error.message)) {
+        throw new Error(
+          `Bucket "${BUCKET}" غير موجود في Supabase Storage — أنشئه واجعله Public`
+        );
+      }
       throw new Error(error.message);
     }
     const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
     return data.publicUrl;
+  }
+
+  if (process.env.VERCEL) {
+    throw new Error(
+      getStorageSetupError() ||
+        "تخزين الصور غير مهيأ على Vercel — أضف SUPABASE_SERVICE_ROLE_KEY ثم Redeploy"
+    );
   }
 
   const dir = path.join(process.cwd(), "public", folder, year);

@@ -146,7 +146,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
               {project.images.map((img, i) => (
                 <motion.div
                   key={img.id}
-                  initial={{ opacity: 0 }}
+                  initial={false}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.05 }}
