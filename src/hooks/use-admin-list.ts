@@ -27,10 +27,23 @@ export function useAdminList<TKey extends string, TItem>(
   const [items, setItems] = useState<TItem[]>([]);
   const [meta, setMeta] = useState<AdminListMeta>(defaultMeta);
   const [loading, setLoading] = useState(true);
+  const [fetching, setFetching] = useState(false);
   const [page, setPageState] = useState(1);
   const [search, setSearchState] = useState("");
   const debouncedSearch = useDebouncedValue(search);
+
   const requestSeq = useRef(0);
+  const hasLoadedRef = useRef(false);
+  const itemsRef = useRef<TItem[]>([]);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   const setPage = useCallback((next: number) => {
     setPageState(Math.max(1, next));
@@ -45,7 +58,13 @@ export function useAdminList<TKey extends string, TItem>(
     if (!enabled) return;
 
     const seq = ++requestSeq.current;
-    setLoading(true);
+    const isInitial = !hasLoadedRef.current;
+
+    if (isInitial) {
+      setLoading(true);
+    } else {
+      setFetching(true);
+    }
 
     try {
       const params = new URLSearchParams({
@@ -64,24 +83,37 @@ export function useAdminList<TKey extends string, TItem>(
       const rawList = data[listKey];
       const nextItems = Array.isArray(rawList) ? rawList : [];
 
-      // Page out of range: total says N items but this page is empty (e.g. page=2, totalPages=1).
       if (nextMeta.total > 0 && page > nextMeta.totalPages) {
         setPageState(nextMeta.totalPages);
         return;
       }
 
+      const hadItems = itemsRef.current.length > 0;
+      const suspiciousEmpty =
+        nextItems.length === 0 &&
+        nextMeta.total > 0 &&
+        page <= nextMeta.totalPages &&
+        !debouncedSearch;
+
+      if (suspiciousEmpty && hadItems) {
+        setMeta(nextMeta);
+        return;
+      }
+
+      itemsRef.current = nextItems;
       setItems(nextItems);
       setMeta(nextMeta);
+      hasLoadedRef.current = true;
     } catch (error) {
       if (seq === requestSeq.current) {
-        onError?.(error);
+        onErrorRef.current?.(error);
       }
     } finally {
-      if (seq === requestSeq.current) {
-        setLoading(false);
-      }
+      if (seq !== requestSeq.current) return;
+      setLoading(false);
+      setFetching(false);
     }
-  }, [debouncedSearch, enabled, endpoint, limit, listKey, onError, page]);
+  }, [debouncedSearch, enabled, endpoint, limit, listKey, page]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -94,6 +126,7 @@ export function useAdminList<TKey extends string, TItem>(
     items,
     meta,
     loading,
+    fetching,
     page,
     setPage,
     search,

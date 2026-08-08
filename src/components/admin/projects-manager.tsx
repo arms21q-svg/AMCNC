@@ -73,10 +73,15 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
   const [libraryTarget, setLibraryTarget] = useState<"cover" | "gallery" | null>(null);
   const { runLocked } = useSubmitLock();
 
+  const handleProjectsLoadError = useCallback(() => {
+    toast.error("تعذر تحميل الأعمال");
+  }, []);
+
   const {
     items: projects,
     meta,
     loading,
+    fetching,
     setPage,
     search,
     setSearch,
@@ -85,7 +90,7 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
     endpoint: "/api/admin/projects",
     listKey: "projects",
     limit: 20,
-    onError: () => toast.error("تعذر تحميل الأعمال"),
+    onError: handleProjectsLoadError,
   });
 
   const fetchCategories = useCallback(async (isActive: () => boolean) => {
@@ -428,7 +433,7 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
           <AdminSearch value={search} onChange={setSearch} placeholder="بحث في الأعمال..." />
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loading && projects.length === 0 ? (
             <AdminTableSkeleton rows={4} />
           ) : projects.length === 0 ? (
             <div className="space-y-3 text-sm">
@@ -506,7 +511,7 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
                 </div>
               ))}
             </div>
-            <AdminPagination meta={meta} onPageChange={setPage} disabled={loading} />
+            <AdminPagination meta={meta} onPageChange={setPage} disabled={fetching} />
             </>
           )}
         </CardContent>

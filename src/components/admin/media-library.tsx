@@ -26,12 +26,16 @@ export function MediaLibrary({ onSelect, selectMode = false }: MediaLibraryProps
   const [uploading, setUploading] = useState(false);
   const [localQuery, setLocalQuery] = useState("");
 
+  const handleLoadError = useCallback(() => {
+    toast.error("تعذر تحميل المحفوظات");
+  }, []);
+
   const paged = useAdminList<"images", LibraryImage>({
     endpoint: "/api/admin/images",
     listKey: "images",
     limit: 24,
     enabled: !selectMode,
-    onError: () => toast.error("تعذر تحميل المحفوظات"),
+    onError: handleLoadError,
   });
 
   useEffect(() => {
@@ -153,7 +157,7 @@ export function MediaLibrary({ onSelect, selectMode = false }: MediaLibraryProps
           />
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loading && displayImages.length === 0 ? (
             <AdminTableSkeleton rows={3} />
           ) : displayImages.length === 0 ? (
             <p className="text-muted text-sm">{ADMIN.noSavedImages}</p>
@@ -218,7 +222,7 @@ export function MediaLibrary({ onSelect, selectMode = false }: MediaLibraryProps
                 ))}
               </div>
               {!selectMode && (
-                <AdminPagination meta={meta} onPageChange={paged.setPage} disabled={loading} />
+                <AdminPagination meta={meta} onPageChange={paged.setPage} disabled={paged.fetching} />
               )}
             </>
           )}

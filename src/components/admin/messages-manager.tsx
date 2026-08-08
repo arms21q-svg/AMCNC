@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { toast } from "sonner";
 import { Trash2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,10 +38,15 @@ const statusLabels = {
 
 export function MessagesManager() {
   const { runLocked } = useSubmitLock();
+  const handleLoadError = useCallback(() => {
+    toast.error("تعذر تحميل الرسائل");
+  }, []);
+
   const {
     items: messages,
     meta,
     loading,
+    fetching,
     setPage,
     search,
     setSearch,
@@ -49,7 +55,7 @@ export function MessagesManager() {
     endpoint: "/api/admin/messages",
     listKey: "messages",
     limit: 15,
-    onError: () => toast.error("تعذر تحميل الرسائل"),
+    onError: handleLoadError,
   });
 
   const updateStatus = async (id: string, status: MessageRow["status"]) => {
@@ -95,7 +101,7 @@ export function MessagesManager() {
           <AdminSearch value={search} onChange={setSearch} placeholder="بحث في الرسائل..." />
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loading && messages.length === 0 ? (
             <AdminTableSkeleton rows={3} />
           ) : messages.length === 0 ? (
             <p className="text-muted text-sm">{ADMIN.noMessages}</p>
@@ -172,7 +178,7 @@ export function MessagesManager() {
                   </div>
                 ))}
               </div>
-              <AdminPagination meta={meta} onPageChange={setPage} disabled={loading} />
+              <AdminPagination meta={meta} onPageChange={setPage} disabled={fetching} />
             </>
           )}
         </CardContent>
