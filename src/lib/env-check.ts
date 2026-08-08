@@ -74,8 +74,8 @@ export function checkProductionEnv(): EnvCheckResult & {
     warnings.push("NEXT_PUBLIC_SITE_URL — optional but recommended for SEO");
   }
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()) {
-    warnings.push("NEXT_PUBLIC_SUPABASE_URL — required for image uploads");
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() && !process.env.SUPABASE_URL?.trim()) {
+    warnings.push("SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL — required for image uploads");
   }
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {

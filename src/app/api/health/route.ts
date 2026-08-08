@@ -4,7 +4,7 @@ import {
   checkProductionEnv,
   getConfiguredEnvSummary,
 } from "@/lib/env-check";
-import { getStorageSetupError } from "@/lib/storage.server";
+import { getStorageSetupError, probeStorageBucket } from "@/lib/storage.server";
 import { prisma } from "@/lib/prisma";
 
 async function getDatabaseStats() {
@@ -26,6 +26,7 @@ export async function GET() {
   const database = auth.ok ? await getDatabaseStats() : undefined;
   const configured = getConfiguredEnvSummary();
   const storageError = auth.ok ? getStorageSetupError() : null;
+  const storageProbe = auth.ok && !storageError ? await probeStorageBucket() : null;
 
   return NextResponse.json({
     status: auth.ok ? "ok" : "misconfigured",
@@ -35,9 +36,10 @@ export async function GET() {
     database,
     storage: auth.ok
       ? {
-          ready: !storageError,
+          ready: !storageError && (storageProbe?.ok ?? false),
           bucket: configured.storageBucket,
-          error: storageError,
+          error: storageError ?? (storageProbe && !storageProbe.ok ? storageProbe.error : null),
+          code: storageProbe && !storageProbe.ok ? storageProbe.code : null,
         }
       : undefined,
     timestamp: new Date().toISOString(),

@@ -4,15 +4,36 @@ import fs from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 
-const BUCKET = process.env.SUPABASE_STORAGE_BUCKET || "project-images";
+const BUCKET = process.env.SUPABASE_STORAGE_BUCKET?.trim() || "project-images";
 
 let supabaseAdmin: SupabaseClient | null = null;
 
-export function isStorageConfigured(): boolean {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+export class StorageError extends Error {
+  constructor(
+    message: string,
+    readonly code: string,
+    readonly httpStatus = 503
+  ) {
+    super(message);
+    this.name = "StorageError";
+  }
+}
+
+/** Server-side Supabase URL — never expose service role to the client. */
+export function getSupabaseServerUrl(): string | undefined {
+  return (
+    process.env.SUPABASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ||
+    undefined
   );
+}
+
+function getSupabaseServiceRoleKey(): string | undefined {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || undefined;
+}
+
+export function isStorageConfigured(): boolean {
+  return Boolean(getSupabaseServerUrl() && getSupabaseServiceRoleKey());
 }
 
 export function getStorageBucketName(): string {
@@ -20,19 +41,23 @@ export function getStorageBucketName(): string {
 }
 
 export function getStorageSetupError(): string | null {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()) {
-    return "NEXT_PUBLIC_SUPABASE_URL غير مضاف في Vercel";
+  if (!getSupabaseServerUrl()) {
+    return "SUPABASE_URL أو NEXT_PUBLIC_SUPABASE_URL غير مضاف في Vercel";
   }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+  if (!getSupabaseServiceRoleKey()) {
     return "SUPABASE_SERVICE_ROLE_KEY غير مضاف في Vercel (Supabase → Settings → API → service_role)";
   }
   return null;
 }
 
-function getSupabaseAdmin(): SupabaseClient | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
+function getSupabaseAdmin(): SupabaseClient {
+  const setupError = getStorageSetupError();
+  if (setupError) {
+    throw new StorageError(setupError, "STORAGE_NOT_CONFIGURED", 503);
+  }
+
+  const url = getSupabaseServerUrl()!;
+  const key = getSupabaseServiceRoleKey()!;
 
   if (!supabaseAdmin) {
     supabaseAdmin = createClient(url, key, {
@@ -53,6 +78,62 @@ function extensionFromName(name: string, contentType: string): string {
   return "jpg";
 }
 
+function mapSupabaseUploadError(message: string): StorageError {
+  if (/bucket not found/i.test(message)) {
+    return new StorageError(
+      `Bucket "${BUCKET}" غير موجود — أنشئه في Supabase Storage واجعله Public`,
+      "BUCKET_NOT_FOUND",
+      503
+    );
+  }
+  if (/invalid api key|jwt|unauthorized/i.test(message)) {
+    return new StorageError(
+      "SUPABASE_SERVICE_ROLE_KEY غير صحيح — راجع Supabase → Settings → API",
+      "STORAGE_AUTH_FAILED",
+      503
+    );
+  }
+  if (/payload too large|entity too large|413/i.test(message)) {
+    return new StorageError("حجم الملف أكبر من الحد المسموح", "FILE_TOO_LARGE", 413);
+  }
+  return new StorageError(message, "STORAGE_UPLOAD_FAILED", 502);
+}
+
+export async function probeStorageBucket(): Promise<
+  { ok: true; bucket: string } | { ok: false; code: string; error: string }
+> {
+  const setupError = getStorageSetupError();
+  if (setupError) {
+    return { ok: false, code: "STORAGE_NOT_CONFIGURED", error: setupError };
+  }
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase.storage.listBuckets();
+    if (error) {
+      return {
+        ok: false,
+        code: "STORAGE_PROBE_FAILED",
+        error: error.message,
+      };
+    }
+
+    const exists = data.some((entry) => entry.name === BUCKET);
+    if (!exists) {
+      return {
+        ok: false,
+        code: "BUCKET_NOT_FOUND",
+        error: `Bucket "${BUCKET}" غير موجود في Supabase Storage`,
+      };
+    }
+
+    return { ok: true, bucket: BUCKET };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Storage probe failed";
+    return { ok: false, code: "STORAGE_PROBE_FAILED", error: message };
+  }
+}
+
 export async function uploadImageBuffer(
   buffer: Buffer,
   originalName: string,
@@ -62,42 +143,42 @@ export async function uploadImageBuffer(
   const ext = extensionFromName(originalName, contentType);
   const filename = `${randomUUID()}.${ext}`;
   const year = new Date().getFullYear().toString();
-  const storagePath = `${folder}/${year}/${filename}`;
+  const safeFolder = folder.replace(/[^a-zA-Z0-9_-]/g, "") || "uploads";
+  const storagePath = `${safeFolder}/${year}/${filename}`;
 
-  const supabase = getSupabaseAdmin();
-  if (supabase) {
+  if (process.env.VERCEL || isStorageConfigured()) {
+    const supabase = getSupabaseAdmin();
     const { error } = await supabase.storage.from(BUCKET).upload(storagePath, buffer, {
       contentType,
       upsert: false,
+      cacheControl: "3600",
     });
+
     if (error) {
-      if (/bucket not found/i.test(error.message)) {
-        throw new Error(
-          `Bucket "${BUCKET}" غير موجود في Supabase Storage — أنشئه واجعله Public`
-        );
-      }
-      throw new Error(error.message);
+      throw mapSupabaseUploadError(error.message);
     }
+
     const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
     return data.publicUrl;
   }
 
-  if (process.env.VERCEL) {
-    throw new Error(
-      getStorageSetupError() ||
-        "تخزين الصور غير مهيأ على Vercel — أضف SUPABASE_SERVICE_ROLE_KEY ثم Redeploy"
-    );
-  }
-
-  const dir = path.join(process.cwd(), "public", folder, year);
+  const dir = path.join(process.cwd(), "public", safeFolder, year);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, filename), buffer);
-  return `/${folder}/${year}/${filename}`;
+  return `/${safeFolder}/${year}/${filename}`;
 }
 
 export async function deleteStoredImage(url: string): Promise<void> {
+  if (!isStorageConfigured()) {
+    if (url.startsWith("/uploads/") && !process.env.VERCEL) {
+      const filePath = path.join(process.cwd(), "public", url.replace(/^\//, ""));
+      await fs.unlink(filePath).catch(() => undefined);
+    }
+    return;
+  }
+
   const supabase = getSupabaseAdmin();
-  if (supabase && url.includes("supabase.co/storage")) {
+  if (url.includes("supabase.co/storage")) {
     const marker = `/storage/v1/object/public/${BUCKET}/`;
     const idx = url.indexOf(marker);
     if (idx !== -1) {
@@ -107,14 +188,14 @@ export async function deleteStoredImage(url: string): Promise<void> {
     return;
   }
 
-  if (url.startsWith("/uploads/")) {
+  if (url.startsWith("/uploads/") && !process.env.VERCEL) {
     const filePath = path.join(process.cwd(), "public", url.replace(/^\//, ""));
     await fs.unlink(filePath).catch(() => undefined);
   }
 }
 
 export async function readImageBuffer(url: string): Promise<{ buffer: Buffer; contentType: string }> {
-  if (url.startsWith("/uploads/")) {
+  if (url.startsWith("/uploads/") && !process.env.VERCEL) {
     const filePath = path.join(process.cwd(), "public", url.replace(/^\//, ""));
     const buffer = await fs.readFile(filePath);
     const ext = path.extname(filePath).slice(1).toLowerCase();

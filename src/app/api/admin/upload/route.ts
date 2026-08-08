@@ -1,7 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminOr401 } from "@/lib/require-admin";
 import { saveUploadedImage, validateUploadFile } from "@/lib/images.server";
-import { getStorageSetupError } from "@/lib/storage.server";
+import {
+  getStorageSetupError,
+  probeStorageBucket,
+  StorageError,
+} from "@/lib/storage.server";
+
+const ALLOWED_FOLDERS = new Set(["uploads", "projects", "hero"]);
+
+function uploadErrorResponse(error: unknown) {
+  if (error instanceof StorageError) {
+    return NextResponse.json(
+      {
+        error: error.message,
+        code: error.code,
+      },
+      { status: error.httpStatus }
+    );
+  }
+
+  const message = error instanceof Error ? error.message : "Upload failed";
+  const isConfig =
+    /غير مضاف|غير مهيأ|Bucket|SERVICE_ROLE|SUPABASE_URL/i.test(message);
+
+  if (isConfig) {
+    return NextResponse.json(
+      { error: message, code: "STORAGE_NOT_CONFIGURED" },
+      { status: 503 }
+    );
+  }
+
+  console.error("[upload]", error);
+  return NextResponse.json(
+    {
+      error:
+        process.env.NODE_ENV === "production"
+          ? "فشل رفع الصورة — حاول لاحقاً"
+          : message,
+      code: "UPLOAD_FAILED",
+    },
+    { status: 500 }
+  );
+}
 
 export async function POST(request: NextRequest) {
   const admin = await getAdminOr401();
@@ -14,26 +55,45 @@ export async function POST(request: NextRequest) {
         {
           error: storageError,
           code: "STORAGE_NOT_CONFIGURED",
-          hint: "Add SUPABASE_SERVICE_ROLE_KEY and SUPABASE_STORAGE_BUCKET on Vercel, then redeploy.",
+          hint: "Add SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL), and create bucket project-images on Vercel, then redeploy.",
+        },
+        { status: 503 }
+      );
+    }
+
+    const bucketProbe = await probeStorageBucket();
+    if (!bucketProbe.ok) {
+      return NextResponse.json(
+        {
+          error: bucketProbe.error,
+          code: bucketProbe.code,
+          hint: 'Create a Public bucket named "project-images" in Supabase Storage (or set SUPABASE_STORAGE_BUCKET).',
         },
         { status: 503 }
       );
     }
 
     const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const folder = (formData.get("folder") as string) || "uploads";
+    const file = formData.get("file");
+    const folderRaw = (formData.get("folder") as string) || "uploads";
+    const folder = ALLOWED_FOLDERS.has(folderRaw) ? folderRaw : "uploads";
     const projectId = (formData.get("projectId") as string) || undefined;
     const altAr = (formData.get("altAr") as string) || undefined;
     const altEn = (formData.get("altEn") as string) || undefined;
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    if (!(file instanceof File)) {
+      return NextResponse.json(
+        { error: "No file provided", code: "NO_FILE" },
+        { status: 400 }
+      );
     }
 
     const validationError = validateUploadFile(file);
     if (validationError) {
-      return NextResponse.json({ error: validationError }, { status: 400 });
+      return NextResponse.json(
+        { error: validationError, code: "INVALID_FILE" },
+        { status: 400 }
+      );
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -50,10 +110,6 @@ export async function POST(request: NextRequest) {
       imageHash: image.imageHash,
     });
   } catch (error) {
-    console.error("[upload]", error);
-    const message =
-      error instanceof Error ? error.message : "Upload failed";
-    const status = /غير مضاف|غير مهيأ|Bucket/i.test(message) ? 503 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return uploadErrorResponse(error);
   }
 }

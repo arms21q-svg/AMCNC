@@ -1,8 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { computeImageHash } from "@/lib/image-similarity";
+import { validateImageFile } from "@/lib/image-upload";
 import { deleteStoredImage, uploadImageBuffer } from "@/lib/storage.server";
-import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE } from "@/lib/image-upload";
 
 export interface SavedImageRow {
   id: string;
@@ -35,40 +35,43 @@ export async function saveUploadedImage(
     order?: number;
   }
 ): Promise<SavedImageRow> {
-  const url = await uploadImageBuffer(
-    buffer,
-    originalName,
-    contentType,
-    options?.folder || "uploads"
-  );
-  const imageHash = await computeImageHash(buffer);
+  let uploadedUrl: string | null = null;
 
-  return prisma.image.create({
-    data: {
-      url,
-      imageHash,
-      altAr: options?.altAr,
-      altEn: options?.altEn,
-      projectId: options?.projectId ?? null,
-      isCover: options?.isCover ?? false,
-      order: options?.order ?? 0,
-    },
-    include: {
-      project: {
-        select: { id: true, slug: true, titleAr: true, titleEn: true },
+  try {
+    uploadedUrl = await uploadImageBuffer(
+      buffer,
+      originalName,
+      contentType,
+      options?.folder || "uploads"
+    );
+    const imageHash = await computeImageHash(buffer);
+
+    return await prisma.image.create({
+      data: {
+        url: uploadedUrl,
+        imageHash,
+        altAr: options?.altAr,
+        altEn: options?.altEn,
+        projectId: options?.projectId ?? null,
+        isCover: options?.isCover ?? false,
+        order: options?.order ?? 0,
       },
-    },
-  });
+      include: {
+        project: {
+          select: { id: true, slug: true, titleAr: true, titleEn: true },
+        },
+      },
+    });
+  } catch (error) {
+    if (uploadedUrl) {
+      await deleteStoredImage(uploadedUrl).catch(() => undefined);
+    }
+    throw error;
+  }
 }
 
 export function validateUploadFile(file: File): string | null {
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
-    return "Invalid file type";
-  }
-  if (file.size > MAX_IMAGE_SIZE) {
-    return "File too large";
-  }
-  return null;
+  return validateImageFile(file);
 }
 
 import type { AdminListQuery } from "@/lib/admin-query";
