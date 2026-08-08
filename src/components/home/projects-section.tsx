@@ -1,13 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getLocalizedField } from "@/lib/utils";
-import { BRAND_LOGO } from "@/lib/brand";
 import type { ProjectListItem } from "@/lib/content-types";
-import Image from "next/image";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ProjectCard } from "@/components/portfolio/project-card";
 
 export function ProjectsSection({ projects }: { projects: ProjectListItem[] }) {
   const t = useTranslations("portfolio");
@@ -32,48 +29,15 @@ export function ProjectsSection({ projects }: { projects: ProjectListItem[] }) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {projects.map((project, index) => {
-            const cover =
-              project.images?.find((i) => i.isCover)?.url ||
-              project.images?.[0]?.url ||
-              BRAND_LOGO;
-
-            return (
-              <motion.div
-                key={project.id}
-                initial={false}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.08 }}
-              >
-                <Link href={`/portfolio/${project.slug}`} className="group block">
-                  <div className="glass-card glass-card-hover overflow-hidden">
-                    <div className="relative aspect-[16/10] overflow-hidden">
-                      <Image
-                        src={cover}
-                        alt={getLocalizedField(project, "title", locale)}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                    </div>
-                    <div className="p-5">
-                      {project.category && (
-                        <span className="text-xs font-medium text-brand-green">
-                          {getLocalizedField(project.category, "name", locale)}
-                        </span>
-                      )}
-                      <h3 className="mt-1 font-display text-lg font-semibold text-white transition-colors group-hover:text-brand-green">
-                        {getLocalizedField(project, "title", locale)}
-                      </h3>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
+          {projects.map((project, index) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              locale={locale}
+              priority={index < 2}
+            />
+          ))}
         </div>
       </div>
     </section>

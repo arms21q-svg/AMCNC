@@ -1,8 +1,19 @@
 import sharp from "sharp";
 
+/** Normalize uploaded/query images before hashing — faster and more consistent. */
+export async function preprocessImageBuffer(buffer: Buffer): Promise<Buffer> {
+  return sharp(buffer)
+    .rotate()
+    .resize(512, 512, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 82 })
+    .toBuffer();
+}
+
 /** Compute a 64-bit difference hash (dHash) from image buffer */
 export async function computeImageHash(buffer: Buffer): Promise<string> {
-  const { data } = await sharp(buffer)
+  const normalized = await preprocessImageBuffer(buffer);
+
+  const { data } = await sharp(normalized)
     .resize(9, 8, { fit: "fill" })
     .grayscale()
     .raw()
@@ -64,9 +75,9 @@ export function findSimilarImages(
       titleEn: string;
     } | null;
   }>,
-  threshold = 50
+  threshold = 40
 ): SimilarImage[] {
-  return images
+  const scored = images
     .filter((img) => img.imageHash)
     .map((img) => ({
       ...img,
@@ -74,4 +85,17 @@ export function findSimilarImages(
     }))
     .filter((img) => img.similarity >= threshold)
     .sort((a, b) => b.similarity - a.similarity);
+
+  const byProject = new Map<string, SimilarImage>();
+  for (const img of scored) {
+    const key = img.project?.slug || img.projectId || img.id;
+    const existing = byProject.get(key);
+    if (!existing || img.similarity > existing.similarity) {
+      byProject.set(key, img);
+    }
+  }
+
+  return [...byProject.values()]
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, 12);
 }

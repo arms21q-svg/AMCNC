@@ -1,23 +1,40 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getLocalizedField } from "@/lib/utils";
-import { BRAND_LOGO } from "@/lib/brand";
 import type { CategoryItem, ProjectListItem } from "@/lib/content-types";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Upload, X } from "lucide-react";
-import { useState, useCallback } from "react";
+import { Search, Upload, X, Loader2 } from "lucide-react";
+import { useMemo, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { ProjectCard } from "@/components/portfolio/project-card";
 
 interface SimilarResult {
   id: string;
   url: string;
   similarity: number;
   project?: { slug: string; titleAr: string; titleEn: string } | null;
+}
+
+function projectMatchesQuery(
+  project: ProjectListItem,
+  query: string,
+  locale: string
+): boolean {
+  if (!query) return true;
+
+  const q = query.toLowerCase();
+  const title = getLocalizedField(project, "title", locale).toLowerCase();
+  const description = getLocalizedField(project, "description", locale).toLowerCase();
+  const category = project.category
+    ? getLocalizedField(project.category, "name", locale).toLowerCase()
+    : "";
+
+  return title.includes(q) || description.includes(q) || category.includes(q);
 }
 
 export function PortfolioGrid({
@@ -30,17 +47,22 @@ export function PortfolioGrid({
   const t = useTranslations("portfolio");
   const locale = useLocale();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 250);
   const [activeCategory, setActiveCategory] = useState("all");
   const [similarResults, setSimilarResults] = useState<SimilarResult[] | null>(null);
   const [searching, setSearching] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = projects.filter((p) => {
-    const title = getLocalizedField(p, "title", locale).toLowerCase();
-    const matchesSearch = title.includes(search.toLowerCase());
-    const matchesCategory =
-      activeCategory === "all" || p.category?.slug === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filtered = useMemo(
+    () =>
+      projects.filter((p) => {
+        const matchesSearch = projectMatchesQuery(p, debouncedSearch.trim(), locale);
+        const matchesCategory =
+          activeCategory === "all" || p.category?.slug === activeCategory;
+        return matchesSearch && matchesCategory;
+      }),
+    [projects, debouncedSearch, activeCategory, locale]
+  );
 
   const handleImageSearch = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,6 +70,7 @@ export function PortfolioGrid({
       if (!file) return;
 
       setSearching(true);
+      setSimilarResults(null);
       try {
         const formData = new FormData();
         formData.append("image", file);
@@ -58,12 +81,19 @@ export function PortfolioGrid({
         });
 
         if (!res.ok) throw new Error("Search failed");
-        const data = await res.json();
-        setSimilarResults(data.results);
+        const data = (await res.json()) as { results?: SimilarResult[] };
+        const results = data.results || [];
+
+        if (results.length === 0) {
+          toast.error(t("noResults"));
+        } else {
+          setSimilarResults(results);
+        }
       } catch {
         toast.error(t("noResults"));
       } finally {
         setSearching(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
     [t]
@@ -71,37 +101,48 @@ export function PortfolioGrid({
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <Input
             placeholder={t("search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="ps-10"
+            aria-label={t("search")}
           />
         </div>
-        <label className="relative cursor-pointer">
+        <div>
           <input
+            ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             className="hidden"
             onChange={handleImageSearch}
             disabled={searching}
           />
-          <Button variant="outline" asChild disabled={searching}>
-            <span>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={searching}
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full md:w-auto"
+          >
+            {searching ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
               <Upload className="h-4 w-4" />
-              {searching ? "..." : t("similaritySearch")}
-            </span>
+            )}
+            {searching ? "..." : t("similaritySearch")}
           </Button>
-        </label>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-8">
+      <div className="-mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
         <Button
           variant={activeCategory === "all" ? "default" : "outline"}
           size="sm"
+          className="shrink-0"
           onClick={() => setActiveCategory("all")}
         >
           {t("allCategories")}
@@ -111,6 +152,7 @@ export function PortfolioGrid({
             key={cat.id}
             variant={activeCategory === cat.slug ? "default" : "outline"}
             size="sm"
+            className="shrink-0"
             onClick={() => setActiveCategory(cat.slug)}
           >
             {getLocalizedField(cat, "name", locale)}
@@ -118,77 +160,68 @@ export function PortfolioGrid({
         ))}
       </div>
 
-      {similarResults && (
-        <div className="mb-8 p-4 rounded-xl border border-primary/30 bg-card">
-          <div className="flex items-center justify-between mb-4">
+      {similarResults && similarResults.length > 0 && (
+        <div className="mb-8 rounded-xl border border-border bg-card p-4">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="font-semibold">{t("similaritySearch")}</h3>
             <Button variant="ghost" size="icon" onClick={() => setSimilarResults(null)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {similarResults.map((result) => (
-              <Link
-                key={result.id}
-                href={`/portfolio/${result.project?.slug || ""}`}
-                className="group"
-              >
-                <div className="relative aspect-square rounded-lg overflow-hidden border border-border">
-                  <Image src={result.url} alt="" fill className="object-cover" sizes="200px" />
-                  <div className="absolute bottom-0 inset-x-0 bg-background/80 p-2 text-center">
-                    <span className="text-xs font-medium text-primary">
-                      {result.similarity}% {t("similarity")}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {similarResults.map((result) => {
+              const title = result.project
+                ? locale === "ar"
+                  ? result.project.titleAr
+                  : result.project.titleEn
+                : "";
+              return (
+                <Link
+                  key={result.id}
+                  href={`/portfolio/${result.project?.slug || ""}`}
+                  className="group block h-full"
+                >
+                  <article className="glass-card glass-card-hover flex h-full flex-col overflow-hidden">
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <Image
+                        src={result.url}
+                        alt={title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        sizes="(max-width: 640px) 100vw, 50vw"
+                        unoptimized
+                      />
+                    </div>
+                    <div className="p-4">
+                      {title ? (
+                        <p className="line-clamp-2 font-display font-semibold group-hover:text-brand-green">
+                          {title}
+                        </p>
+                      ) : null}
+                      <p className="mt-1 text-xs font-medium text-brand-green">
+                        {result.similarity}% {t("similarity")}
+                      </p>
+                    </div>
+                  </article>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-center text-muted py-20">{t("noResults")}</p>
+        <p className="py-20 text-center text-muted">{t("noResults")}</p>
       ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((project, index) => {
-            const coverImage =
-              project.images?.find((img) => img.isCover)?.url ||
-              project.images?.[0]?.url ||
-              BRAND_LOGO;
-
-            return (
-              <motion.div
-                key={project.id}
-                initial={false}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Link href={`/portfolio/${project.slug}`} className="group block">
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border">
-                    <Image
-                      src={coverImage}
-                      alt={getLocalizedField(project, "title", locale)}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-                    <div className="absolute bottom-0 inset-x-0 p-5">
-                      {project.category && (
-                        <span className="text-xs text-primary font-medium">
-                          {getLocalizedField(project.category, "name", locale)}
-                        </span>
-                      )}
-                      <h3 className="font-display text-lg font-semibold">
-                        {getLocalizedField(project, "title", locale)}
-                      </h3>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
+          {filtered.map((project, index) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              locale={locale}
+              priority={index < 2}
+            />
+          ))}
         </div>
       )}
     </div>

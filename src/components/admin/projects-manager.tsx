@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Star, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Star, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -488,6 +488,11 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
                     )}
                   </div>
                   <div className="flex gap-2">
+                    <Button variant="outline" size="sm" asChild title="معاينة العمل">
+                      <Link href={`/ar/portfolio/${project.slug}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </Button>
                     <Button
                       variant={project.featured ? "default" : "outline"}
                       size="sm"

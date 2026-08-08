@@ -164,6 +164,8 @@
     "error": "An error occurred, please try again",
     "address": "Address",
     "workingHours": "Working Hours",
+    "workingHoursValue": "Sun - Thu: 8:00 AM - 6:00 PM",
+    "whatsapp": "Contact via WhatsApp",
     "followUs": "Follow Us",
     "socialLinksHint": "Add social links from Admin → Social Links"
   },
