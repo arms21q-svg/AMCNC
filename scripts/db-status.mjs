@@ -28,6 +28,12 @@ const host = (() => {
 })();
 
 try {
+  const tables = await pool.query(`
+    SELECT table_name FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name IN ('projects', 'users', 'settings', 'images')
+    ORDER BY table_name
+  `);
+
   const counts = await pool.query(`
     SELECT
       (SELECT COUNT(*)::int FROM projects) AS projects,
@@ -36,7 +42,35 @@ try {
       (SELECT COUNT(*)::int FROM categories) AS categories
   `);
 
-  console.log(JSON.stringify({ host, ...counts.rows[0] }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        host,
+        schemaReady: tables.rows.length >= 4,
+        tables: tables.rows.map((r) => r.table_name),
+        ...counts.rows[0],
+      },
+      null,
+      2
+    )
+  );
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const schemaMissing = /does not exist|relation .* does not exist/i.test(message);
+  console.log(
+    JSON.stringify(
+      {
+        host,
+        schemaReady: false,
+        error: schemaMissing
+          ? "Schema missing — run: npm run db:migrate:deploy && npm run db:seed"
+          : message,
+      },
+      null,
+      2
+    )
+  );
+  process.exit(schemaMissing ? 1 : 1);
 } finally {
   await pool.end();
 }

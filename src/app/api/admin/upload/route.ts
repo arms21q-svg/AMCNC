@@ -6,6 +6,7 @@ import {
   probeStorageBucket,
   StorageError,
 } from "@/lib/storage.server";
+import { mapPrismaApiError } from "@/lib/prisma-errors";
 
 const ALLOWED_FOLDERS = new Set(["uploads", "projects", "hero"]);
 
@@ -17,6 +18,18 @@ function uploadErrorResponse(error: unknown) {
         code: error.code,
       },
       { status: error.httpStatus }
+    );
+  }
+
+  const prismaMapped = mapPrismaApiError(error);
+  if (prismaMapped.code !== "DB_ERROR" || prismaMapped.status !== 500) {
+    return NextResponse.json(
+      {
+        error: prismaMapped.error,
+        code: prismaMapped.code,
+        ...(prismaMapped.hint ? { hint: prismaMapped.hint } : {}),
+      },
+      { status: prismaMapped.status }
     );
   }
 

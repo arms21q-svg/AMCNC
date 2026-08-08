@@ -7,6 +7,7 @@ import {
   syncContactFloatingLinks,
   upsertSettings,
 } from "@/lib/site-settings.server";
+import { mapPrismaApiError } from "@/lib/prisma-errors";
 import {
   CONTACT_SETTING_KEYS,
   HOMEPAGE_SETTING_KEYS,
@@ -27,25 +28,38 @@ export async function GET(request: NextRequest) {
   const admin = await getAdminOr401();
   if (admin instanceof NextResponse) return admin;
 
-  const section = request.nextUrl.searchParams.get("section");
+  try {
+    const section = request.nextUrl.searchParams.get("section");
 
-  if (section === "homepage") {
-    const settings = await getSettingsMap();
-    const homepageKeys = [...HOMEPAGE_SETTING_KEYS, ...HERO_SLIDE_SETTING_KEYS];
-    return NextResponse.json({ settings: pickKeys(settings, homepageKeys) });
+    if (section === "homepage") {
+      const settings = await getSettingsMap();
+      const homepageKeys = [...HOMEPAGE_SETTING_KEYS, ...HERO_SLIDE_SETTING_KEYS];
+      return NextResponse.json({ settings: pickKeys(settings, homepageKeys) });
+    }
+
+    if (section === "contact") {
+      const contact = await getContactSettings();
+      return NextResponse.json({ contact });
+    }
+
+    const [settings, contact] = await Promise.all([
+      getSettingsMap(),
+      getContactSettings(),
+    ]);
+
+    return NextResponse.json({ settings, contact });
+  } catch (error) {
+    console.error("[admin/settings GET]", error);
+    const mapped = mapPrismaApiError(error);
+    return NextResponse.json(
+      {
+        error: mapped.error,
+        code: mapped.code,
+        ...(mapped.hint ? { hint: mapped.hint } : {}),
+      },
+      { status: mapped.status }
+    );
   }
-
-  if (section === "contact") {
-    const contact = await getContactSettings();
-    return NextResponse.json({ contact });
-  }
-
-  const [settings, contact] = await Promise.all([
-    getSettingsMap(),
-    getContactSettings(),
-  ]);
-
-  return NextResponse.json({ settings, contact });
 }
 
 export async function PUT(request: NextRequest) {
@@ -91,7 +105,19 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error("[admin/settings PUT]", error);
+    const mapped = mapPrismaApiError(error);
+    if (mapped.code !== "DB_ERROR") {
+      return NextResponse.json(
+        {
+          error: mapped.error,
+          code: mapped.code,
+          ...(mapped.hint ? { hint: mapped.hint } : {}),
+        },
+        { status: mapped.status }
+      );
+    }
     return NextResponse.json({ error: "Save failed" }, { status: 400 });
   }
 }

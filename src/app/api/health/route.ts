@@ -5,6 +5,7 @@ import {
   getConfiguredEnvSummary,
 } from "@/lib/env-check";
 import { getStorageSetupError, probeStorageBucket } from "@/lib/storage.server";
+import { isPrismaSchemaMissingError } from "@/lib/prisma-errors";
 import { prisma } from "@/lib/prisma";
 
 async function getDatabaseStats() {
@@ -14,9 +15,19 @@ async function getDatabaseStats() {
       prisma.project.count({ where: { published: true } }),
       prisma.user.count(),
     ]);
-    return { projects, published, users, connected: true as const };
-  } catch {
-    return { projects: 0, published: 0, users: 0, connected: false as const };
+    return { projects, published, users, connected: true as const, schemaReady: true as const };
+  } catch (error) {
+    const schemaMissing = isPrismaSchemaMissingError(error);
+    return {
+      projects: 0,
+      published: 0,
+      users: 0,
+      connected: !schemaMissing,
+      schemaReady: false as const,
+      schemaError: schemaMissing
+        ? "Run prisma migrate deploy on this Supabase database"
+        : undefined,
+    };
   }
 }
 

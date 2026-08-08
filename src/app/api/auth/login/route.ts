@@ -4,6 +4,7 @@ import { comparePassword, signToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { checkAuthEnv, formatEnvCheckError } from "@/lib/env-check";
+import { mapPrismaApiError } from "@/lib/prisma-errors";
 
 const ADMIN_COOKIE = "admin-token";
 const ADMIN_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -102,6 +103,19 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("[auth/login]", error);
+
+    const prismaMapped = mapPrismaApiError(error);
+    if (prismaMapped.code !== "DB_ERROR" || prismaMapped.status !== 500) {
+      return NextResponse.json(
+        {
+          error: prismaMapped.error,
+          code: prismaMapped.code,
+          ...(prismaMapped.hint ? { hint: prismaMapped.hint } : {}),
+        },
+        { status: prismaMapped.status }
+      );
+    }
+
     return NextResponse.json(
       { error: isProd ? "Internal server error" : message },
       { status: 500 }

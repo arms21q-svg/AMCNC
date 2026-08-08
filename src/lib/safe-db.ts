@@ -1,5 +1,6 @@
 import "server-only";
 import { resetPrismaPool } from "@/lib/prisma";
+import { isPrismaSchemaMissingError } from "@/lib/prisma-errors";
 
 const isDev = process.env.NODE_ENV !== "production";
 const QUERY_TIMEOUT_MS = isDev ? 30_000 : 15_000;
@@ -64,6 +65,10 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   }
 }
 
+function isSchemaMissingError(error: unknown): boolean {
+  return isPrismaSchemaMissingError(error);
+}
+
 function warnDbUnavailable(): void {
   if (dbWarned || !isDev) return;
   dbWarned = true;
@@ -83,8 +88,15 @@ export async function safeDbQuery<T>(
     dbWarned = false;
     return result;
   } catch (error) {
-    if (!isConnectionError(error)) {
+    if (!isConnectionError(error) && !isSchemaMissingError(error)) {
       console.error(`[${label}]`, error);
+      return fallback;
+    }
+
+    if (isSchemaMissingError(error)) {
+      console.error(
+        `[${label}] Database schema missing — run npm run db:migrate:deploy`
+      );
       return fallback;
     }
 
