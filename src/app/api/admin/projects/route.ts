@@ -5,23 +5,10 @@ import { getAdminOr401 } from "@/lib/require-admin";
 import { getProjectsAdminPaginated } from "@/lib/projects.server";
 import { syncProjectImages } from "@/lib/project-images.server";
 import { buildListMeta, parseAdminListQuery } from "@/lib/admin-query";
+import { normalizeProjectInput, projectInputSchema } from "@/lib/project-schema";
+import { mapPrismaApiError } from "@/lib/prisma-errors";
 
-const projectSchema = z.object({
-  slug: z.string().min(1).max(120),
-  titleAr: z.string().min(1),
-  titleEn: z.string().min(1),
-  descriptionAr: z.string().min(1),
-  descriptionEn: z.string().min(1),
-  client: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  year: z.number().int().optional().nullable(),
-  featured: z.boolean().default(false),
-  published: z.boolean().default(true),
-  order: z.number().int().default(0),
-  categoryId: z.string().optional().nullable(),
-  coverUrl: z.string().optional().nullable(),
-  galleryUrls: z.array(z.string()).optional(),
-});
+const projectSchema = projectInputSchema;
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminOr401();
@@ -42,20 +29,21 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = projectSchema.parse(await request.json());
-    const { coverUrl, galleryUrls, ...data } = body;
+    const data = normalizeProjectInput(body);
+    const { coverUrl, galleryUrls, ...rest } = data;
 
     const project = await prisma.project.create({
       data: {
-        ...data,
-        categoryId: data.categoryId || null,
+        ...rest,
+        categoryId: rest.categoryId || null,
         images: coverUrl
           ? {
               create: {
                 url: coverUrl,
                 isCover: true,
                 order: 0,
-                altAr: data.titleAr,
-                altEn: data.titleEn,
+                altAr: rest.titleAr,
+                altEn: rest.titleEn,
               },
             }
           : undefined,
@@ -69,8 +57,8 @@ export async function POST(request: NextRequest) {
     if (galleryUrls?.length) {
       await syncProjectImages(
         project.id,
-        data.titleAr,
-        data.titleEn,
+        rest.titleAr,
+        rest.titleEn,
         null,
         galleryUrls.filter((url) => url !== coverUrl)
       );
@@ -81,6 +69,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
+    const mapped = mapPrismaApiError(error);
+    return NextResponse.json(
+      { error: mapped.error, code: mapped.code },
+      { status: mapped.status }
+    );
   }
 }

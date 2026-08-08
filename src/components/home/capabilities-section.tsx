@@ -28,12 +28,12 @@ export function CapabilitiesSection() {
     <section className="section-padding section-divider bg-[#080808] hidden md:block">
       <div className="site-container">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="mx-auto mb-12 max-w-2xl text-center md:mb-16"
         >
-          <h2 className="font-display text-3xl font-bold text-white md:text-4xl">
+          <h2 className="font-display text-section-title font-bold text-white md:text-4xl">
             {t("title")}
           </h2>
           <p className="mt-4 text-muted">{t("subtitle")}</p>
@@ -43,7 +43,7 @@ export function CapabilitiesSection() {
           {cards.map((card, i) => (
             <motion.div
               key={card.key}
-              initial={{ opacity: 0, y: 16 }}
+              initial={false}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.06 }}

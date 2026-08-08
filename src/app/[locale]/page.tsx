@@ -1,15 +1,53 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import dynamic from "next/dynamic";
 import { HeroSection } from "@/components/home/hero-section";
-import { FeaturesSection } from "@/components/home/features-section";
-import { CapabilitiesSection } from "@/components/home/capabilities-section";
-import { MobileCategoriesSection } from "@/components/home/mobile-categories-section";
 import { ProjectsSection } from "@/components/home/projects-section";
-import { CTASection } from "@/components/home/cta-section";
-import { HomeFooter } from "@/components/home/home-footer";
 import { getFeaturedProjects } from "@/lib/projects.server";
 import { getHomepageContent } from "@/lib/site-settings.server";
 import { getHeroSlides } from "@/lib/hero-slides.server";
 import { buildPageMetadata } from "@/lib/seo";
+
+const FeaturesSection = dynamic(
+  () =>
+    import("@/components/home/features-section").then((m) => ({
+      default: m.FeaturesSection,
+    })),
+  { ssr: true }
+);
+
+const MobileCategoriesSection = dynamic(
+  () =>
+    import("@/components/home/mobile-categories-section").then((m) => ({
+      default: m.MobileCategoriesSection,
+    })),
+  { ssr: true }
+);
+
+const CapabilitiesSection = dynamic(
+  () =>
+    import("@/components/home/capabilities-section").then((m) => ({
+      default: m.CapabilitiesSection,
+    })),
+  { ssr: true }
+);
+
+const CTASection = dynamic(
+  () =>
+    import("@/components/home/cta-section").then((m) => ({
+      default: m.CTASection,
+    })),
+  { ssr: true }
+);
+
+const HomeFooter = dynamic(
+  () =>
+    import("@/components/home/home-footer").then((m) => ({
+      default: m.HomeFooter,
+    })),
+  { ssr: true }
+);
+
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,

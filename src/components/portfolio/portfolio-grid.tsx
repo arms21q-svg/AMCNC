@@ -138,11 +138,10 @@ export function PortfolioGrid({
         </div>
       </div>
 
-      <div className="-mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+      <div className="-mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
         <Button
           variant={activeCategory === "all" ? "default" : "outline"}
-          size="sm"
-          className="shrink-0"
+          className="h-11 shrink-0 px-4 text-sm sm:h-9 sm:px-4 sm:text-xs"
           onClick={() => setActiveCategory("all")}
         >
           {t("allCategories")}
@@ -151,8 +150,7 @@ export function PortfolioGrid({
           <Button
             key={cat.id}
             variant={activeCategory === cat.slug ? "default" : "outline"}
-            size="sm"
-            className="shrink-0"
+            className="h-11 shrink-0 px-4 text-sm sm:h-9 sm:px-4 sm:text-xs"
             onClick={() => setActiveCategory(cat.slug)}
           >
             {getLocalizedField(cat, "name", locale)}
@@ -213,7 +211,7 @@ export function PortfolioGrid({
       {filtered.length === 0 ? (
         <p className="py-20 text-center text-muted">{t("noResults")}</p>
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-6">
           {filtered.map((project, index) => (
             <ProjectCard
               key={project.id}

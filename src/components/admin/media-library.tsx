@@ -82,7 +82,7 @@ export function MediaLibrary({ onSelect, selectMode = false }: MediaLibraryProps
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("folder", "uploads");
+      formData.append("folder", "library");
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       await parseJsonResponse(res);
       toast.success("تم رفع الصورة إلى المحفوظات");

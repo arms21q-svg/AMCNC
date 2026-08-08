@@ -42,7 +42,7 @@ export async function saveUploadedImage(
       buffer,
       originalName,
       contentType,
-      options?.folder || "uploads"
+      options?.folder || "library"
     );
     const imageHash = await computeImageHash(buffer);
 

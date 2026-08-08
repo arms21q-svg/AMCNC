@@ -19,6 +19,7 @@
     "logo:prepare": "node scripts/prepare-logo.mjs",
     "env:check": "node scripts/check-env.mjs",
     "storage:check": "node scripts/check-storage.mjs",
+    "storage:setup": "node scripts/check-storage.mjs --create",
     "postinstall": "prisma generate"
   },
   "dependencies": {

@@ -19,7 +19,7 @@ export function ProjectsSection({ projects }: { projects: ProjectListItem[] }) {
         <div className="mb-10 flex flex-col gap-4 md:mb-14 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="mb-2 text-sm font-medium text-brand-green">{t("title")}</p>
-            <h2 className="font-display text-3xl font-bold text-white md:text-4xl">
+            <h2 className="font-display text-section-title font-bold text-white">
               {t("subtitle")}
             </h2>
           </div>
@@ -29,7 +29,7 @@ export function ProjectsSection({ projects }: { projects: ProjectListItem[] }) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-6">
           {projects.map((project, index) => (
             <ProjectCard
               key={project.id}

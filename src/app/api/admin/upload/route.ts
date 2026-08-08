@@ -2,18 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminOr401 } from "@/lib/require-admin";
 import { saveUploadedImage, validateUploadFile } from "@/lib/images.server";
 import {
+  ensureStorageBucket,
   getStorageSetupError,
-  probeStorageBucket,
   StorageError,
 } from "@/lib/storage.server";
+import { ALLOWED_UPLOAD_FOLDERS, resolveStorageFolder } from "@/lib/storage-config";
 import { mapPrismaApiError } from "@/lib/prisma-errors";
-
-const ALLOWED_FOLDERS = new Set(["uploads", "projects", "hero"]);
 
 function uploadErrorResponse(error: unknown) {
   if (error instanceof StorageError) {
+    console.error("[upload] storage error:", error.code, error.message);
     return NextResponse.json(
       {
+        success: false,
         error: error.message,
         code: error.code,
       },
@@ -23,8 +24,10 @@ function uploadErrorResponse(error: unknown) {
 
   const prismaMapped = mapPrismaApiError(error);
   if (prismaMapped.code !== "DB_ERROR" || prismaMapped.status !== 500) {
+    console.error("[upload] db error:", prismaMapped.code, prismaMapped.error);
     return NextResponse.json(
       {
+        success: false,
         error: prismaMapped.error,
         code: prismaMapped.code,
         ...(prismaMapped.hint ? { hint: prismaMapped.hint } : {}),
@@ -39,14 +42,15 @@ function uploadErrorResponse(error: unknown) {
 
   if (isConfig) {
     return NextResponse.json(
-      { error: message, code: "STORAGE_NOT_CONFIGURED" },
+      { success: false, error: message, code: "STORAGE_NOT_CONFIGURED" },
       { status: 503 }
     );
   }
 
-  console.error("[upload]", error);
+  console.error("[upload] unexpected error:", error);
   return NextResponse.json(
     {
+      success: false,
       error:
         process.env.NODE_ENV === "production"
           ? "فشل رفع الصورة — حاول لاحقاً"
@@ -66,37 +70,29 @@ export async function POST(request: NextRequest) {
     if (storageError) {
       return NextResponse.json(
         {
+          success: false,
           error: storageError,
           code: "STORAGE_NOT_CONFIGURED",
-          hint: "Add SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL), and create bucket project-images on Vercel, then redeploy.",
+          hint: "Add SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_URL on Vercel, then redeploy.",
         },
         { status: 503 }
       );
     }
 
-    const bucketProbe = await probeStorageBucket();
-    if (!bucketProbe.ok) {
-      return NextResponse.json(
-        {
-          error: bucketProbe.error,
-          code: bucketProbe.code,
-          hint: 'Create a Public bucket named "project-images" in Supabase Storage (or set SUPABASE_STORAGE_BUCKET).',
-        },
-        { status: 503 }
-      );
-    }
+    await ensureStorageBucket();
 
     const formData = await request.formData();
     const file = formData.get("file");
-    const folderRaw = (formData.get("folder") as string) || "uploads";
-    const folder = ALLOWED_FOLDERS.has(folderRaw) ? folderRaw : "uploads";
+    const folderRaw = (formData.get("folder") as string) || "library";
+    const folder = ALLOWED_UPLOAD_FOLDERS.has(folderRaw) ? folderRaw : "library";
+    const storageFolder = resolveStorageFolder(folder);
     const projectId = (formData.get("projectId") as string) || undefined;
     const altAr = (formData.get("altAr") as string) || undefined;
     const altEn = (formData.get("altEn") as string) || undefined;
 
     if (!(file instanceof File)) {
       return NextResponse.json(
-        { error: "No file provided", code: "NO_FILE" },
+        { success: false, error: "No file provided", code: "NO_FILE" },
         { status: 400 }
       );
     }
@@ -104,22 +100,23 @@ export async function POST(request: NextRequest) {
     const validationError = validateUploadFile(file);
     if (validationError) {
       return NextResponse.json(
-        { error: validationError, code: "INVALID_FILE" },
+        { success: false, error: validationError, code: "INVALID_FILE" },
         { status: 400 }
       );
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const image = await saveUploadedImage(buffer, file.name, file.type, {
-      folder,
+      folder: storageFolder,
       altAr,
       altEn,
       projectId: projectId || null,
     });
 
     return NextResponse.json({
-      id: image.id,
+      success: true,
       url: image.url,
+      id: image.id,
       imageHash: image.imageHash,
     });
   } catch (error) {

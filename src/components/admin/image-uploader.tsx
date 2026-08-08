@@ -26,7 +26,7 @@ export function ImageUploader({
   label,
   value,
   onChange,
-  folder = "uploads",
+  folder = "library",
   imageId,
   className,
   onPickFromLibrary,
@@ -51,7 +51,8 @@ export function ImageUploader({
         method: "POST",
         body: formData,
       });
-      const data = await parseJsonResponse<{ url: string; id: string }>(res);
+      const data = await parseJsonResponse<{ success?: boolean; url: string; id: string }>(res);
+      if (!data.url) throw new Error("لم يُرجع الخادم رابط الصورة");
       onChange(data.url);
       toast.success("تم رفع الصورة");
     } catch (err) {

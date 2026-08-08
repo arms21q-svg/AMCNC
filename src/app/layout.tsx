@@ -1,6 +1,13 @@
 import { Cairo, Montserrat } from "next/font/google";
 import { headers } from "next/headers";
+import type { Viewport } from "next";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#000000",
+};
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],

@@ -45,8 +45,8 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   };
 
   return (
-    <div className="pt-24 md:pt-32 pb-20">
-      <div className="container mx-auto px-4 lg:px-8">
+    <div className="pt-20 pb-16 sm:pt-24 md:pt-32 md:pb-20">
+      <div className="site-container">
         <Link
           href="/portfolio"
           className="inline-flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors mb-8"
@@ -58,7 +58,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
           <div>
             <div
-              className="relative aspect-[4/3] rounded-xl overflow-hidden border border-border cursor-pointer"
+              className="relative aspect-[5/4] cursor-pointer overflow-hidden rounded-xl border border-border sm:aspect-[4/3]"
               onClick={() => setLightboxIndex(0)}
             >
               <Image
@@ -92,10 +92,10 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                 {getLocalizedField(project.category, "name", locale)}
               </span>
             )}
-            <h1 className="font-display text-3xl md:text-4xl font-bold mt-2 mb-6">
+            <h1 className="font-display text-page-title mt-2 mb-6 font-bold">
               {getLocalizedField(project, "title", locale)}
             </h1>
-            <p className="text-muted leading-relaxed mb-8">
+            <p className="text-body mb-8 leading-relaxed text-muted">
               {getLocalizedField(project, "description", locale)}
             </p>
 

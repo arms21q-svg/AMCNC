@@ -1,5 +1,6 @@
 import "server-only";
 import { isStorageConfigured, getStorageBucketName } from "@/lib/storage.server";
+import { STORAGE_BUCKET } from "@/lib/storage-config";
 
 export type EnvCheckResult =
   | { ok: true }
@@ -85,7 +86,7 @@ export function checkProductionEnv(): EnvCheckResult & {
   }
 
   if (!process.env.SUPABASE_STORAGE_BUCKET?.trim()) {
-    warnings.push('SUPABASE_STORAGE_BUCKET — optional, default: "project-images"');
+    warnings.push(`SUPABASE_STORAGE_BUCKET — optional, default: "${STORAGE_BUCKET}"`);
   }
 
   return warnings.length > 0 ? { ok: true, warnings } : { ok: true };

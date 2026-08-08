@@ -4,7 +4,7 @@ import {
   checkProductionEnv,
   getConfiguredEnvSummary,
 } from "@/lib/env-check";
-import { getStorageSetupError, probeStorageBucket } from "@/lib/storage.server";
+import { getStorageSetupError, probeStorageBucket, ensureStorageBucket } from "@/lib/storage.server";
 import { isPrismaSchemaMissingError } from "@/lib/prisma-errors";
 import { prisma } from "@/lib/prisma";
 
@@ -37,7 +37,16 @@ export async function GET() {
   const database = auth.ok ? await getDatabaseStats() : undefined;
   const configured = getConfiguredEnvSummary();
   const storageError = auth.ok ? getStorageSetupError() : null;
-  const storageProbe = auth.ok && !storageError ? await probeStorageBucket() : null;
+  let storageProbe = auth.ok && !storageError ? await probeStorageBucket() : null;
+
+  if (auth.ok && !storageError && storageProbe && !storageProbe.ok && storageProbe.code === "BUCKET_NOT_FOUND") {
+    try {
+      await ensureStorageBucket();
+      storageProbe = await probeStorageBucket();
+    } catch {
+      /* health stays not ready — upload route will retry */
+    }
+  }
 
   return NextResponse.json({
     status: auth.ok ? "ok" : "misconfigured",

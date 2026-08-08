@@ -20,7 +20,7 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={toggleLocale}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/80 transition-colors hover:border-brand-green hover:text-brand-green md:hidden"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-foreground/80 transition-colors hover:border-brand-green hover:text-brand-green md:hidden"
         aria-label="Switch language"
       >
         <Globe className="h-4 w-4" />

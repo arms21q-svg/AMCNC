@@ -35,25 +35,25 @@ export function HeroSection({
   const subtitle = content?.subtitle || t("subtitle");
 
   return (
-    <section className="relative min-h-[85vh] overflow-hidden">
+    <section className="relative min-h-[80svh] overflow-hidden sm:min-h-[85vh]">
       <HeroSlider locale={locale} slides={slides} />
 
-      <div className="glow-orb -top-32 start-1/2 z-[1] h-[500px] w-[600px] -translate-x-1/2 pointer-events-none" />
+      <div className="glow-orb pointer-events-none -top-32 start-1/2 z-[1] h-[min(500px,80vw)] w-[min(600px,95vw)] -translate-x-1/2" />
 
-      <div className="site-container relative z-10 flex min-h-[85vh] flex-col justify-center pt-24 pb-16 sm:pt-28 md:pt-32 md:pb-20">
+      <div className="site-container relative z-10 flex min-h-[80svh] flex-col justify-center pt-20 pb-14 sm:min-h-[85vh] sm:pt-28 sm:pb-16 md:pt-32 md:pb-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="mx-auto max-w-3xl text-center"
         >
-          <div className="mb-8 flex justify-center">
-            <Logo variant="full" priority className="h-20 drop-shadow-lg sm:h-24 md:h-28" />
+          <div className="mb-6 flex justify-center sm:mb-8">
+            <Logo variant="full" priority className="h-[clamp(4.5rem,18vw,7rem)] drop-shadow-lg" />
           </div>
 
-          <p className="mb-4 text-sm font-medium text-brand-green">{eyebrow}</p>
+          <p className="mb-3 text-sm font-medium text-brand-green sm:mb-4">{eyebrow}</p>
 
-          <h1 className="font-display text-3xl font-bold leading-tight text-white drop-shadow-sm sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 className="font-display text-display font-bold text-white drop-shadow-sm">
             {title}{" "}
             <span className="bg-gradient-to-r from-brand-green to-brand-green-light bg-clip-text text-transparent">
               {titleHighlight}
@@ -61,11 +61,11 @@ export function HeroSection({
             {titleEnd}
           </h1>
 
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/80 md:text-lg">
+          <p className="text-body-lg mx-auto mt-5 max-w-xl text-white/85 sm:mt-6">
             {subtitle}
           </p>
 
-          <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
+          <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
             <WhatsAppLink className="btn-primary justify-center shadow-[0_0_24px_var(--brand-glow)]">
               {t("ctaContact")}
             </WhatsAppLink>

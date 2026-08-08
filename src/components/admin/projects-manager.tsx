@@ -289,19 +289,25 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>{ADMIN.descriptionAr}</Label>
+                <Label>
+                  {ADMIN.descriptionAr}{" "}
+                  <span className="text-muted font-normal">{ADMIN.optional}</span>
+                </Label>
                 <Textarea
                   value={form.descriptionAr}
                   onChange={(e) => setForm({ ...form, descriptionAr: e.target.value })}
-                  required
+                  placeholder={ADMIN.descriptionAr}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>{ADMIN.descriptionEn}</Label>
+                <Label>
+                  {ADMIN.descriptionEn}{" "}
+                  <span className="text-muted font-normal">{ADMIN.optional}</span>
+                </Label>
                 <Textarea
                   value={form.descriptionEn}
                   onChange={(e) => setForm({ ...form, descriptionEn: e.target.value })}
-                  required
+                  placeholder={ADMIN.descriptionEn}
                 />
               </div>
               <div className="space-y-2">
@@ -332,7 +338,10 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
                 />
               </div>
               <div className="space-y-3 md:col-span-2">
-                <Label>{ADMIN.galleryImages}</Label>
+                <Label>
+                  {ADMIN.galleryImages}{" "}
+                  <span className="text-muted font-normal">{ADMIN.optional}</span>
+                </Label>
                 {form.galleryUrls.map((url, index) => (
                   <ImageUploader
                     key={`${url}-${index}`}
@@ -363,7 +372,10 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
                 </Button>
               </div>
               <div className="space-y-2">
-                <Label>{ADMIN.client}</Label>
+                <Label>
+                  {ADMIN.client}{" "}
+                  <span className="text-muted font-normal">{ADMIN.optional}</span>
+                </Label>
                 <Input
                   value={form.client}
                   onChange={(e) => setForm({ ...form, client: e.target.value })}

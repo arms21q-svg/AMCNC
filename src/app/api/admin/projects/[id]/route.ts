@@ -3,23 +3,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAdminOr401 } from "@/lib/require-admin";
 import { syncProjectImages } from "@/lib/project-images.server";
+import { normalizeProjectInput, projectInputSchema } from "@/lib/project-schema";
+import { mapPrismaApiError } from "@/lib/prisma-errors";
 
-const projectSchema = z.object({
-  slug: z.string().min(1).max(120),
-  titleAr: z.string().min(1),
-  titleEn: z.string().min(1),
-  descriptionAr: z.string().min(1),
-  descriptionEn: z.string().min(1),
-  client: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  year: z.number().int().optional().nullable(),
-  featured: z.boolean().default(false),
-  published: z.boolean().default(true),
-  order: z.number().int().default(0),
-  categoryId: z.string().optional().nullable(),
-  coverUrl: z.string().optional().nullable(),
-  galleryUrls: z.array(z.string()).optional(),
-});
+const projectSchema = projectInputSchema;
 
 const patchSchema = z.object({
   featured: z.boolean().optional(),
@@ -82,13 +69,14 @@ export async function PUT(
 
   try {
     const body = projectSchema.parse(await request.json());
-    const { coverUrl, galleryUrls, ...data } = body;
+    const data = normalizeProjectInput(body);
+    const { coverUrl, galleryUrls, ...rest } = data;
 
     const project = await prisma.project.update({
       where: { id },
       data: {
-        ...data,
-        categoryId: data.categoryId || null,
+        ...rest,
+        categoryId: rest.categoryId || null,
       },
       include: {
         category: { select: { id: true, slug: true, nameAr: true, nameEn: true } },
@@ -98,8 +86,8 @@ export async function PUT(
 
     await syncProjectImages(
       id,
-      data.titleAr,
-      data.titleEn,
+      rest.titleAr,
+      rest.titleEn,
       coverUrl,
       galleryUrls
     );
@@ -109,7 +97,11 @@ export async function PUT(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Validation failed" }, { status: 400 });
     }
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
+    const mapped = mapPrismaApiError(error);
+    return NextResponse.json(
+      { error: mapped.error, code: mapped.code },
+      { status: mapped.status }
+    );
   }
 }
 

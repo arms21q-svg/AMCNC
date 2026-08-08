@@ -63,6 +63,7 @@ export function buildPageMetadata({
   }));
 
   return {
+    metadataBase: new URL(getSiteUrl()),
     title,
     description,
     keywords,

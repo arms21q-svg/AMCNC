@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Verify Supabase Storage bucket is reachable.
+ * Verify (and optionally create) Supabase Storage bucket project-images.
  * Run: npm run storage:check
+ * Create: npm run storage:setup
  */
 import { config } from "dotenv";
 import { resolve } from "path";
@@ -15,7 +16,8 @@ const url =
   process.env.SUPABASE_URL?.trim() ||
   process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-const bucket = process.env.SUPABASE_STORAGE_BUCKET?.trim() || "project-images";
+const bucket = "project-images";
+const shouldCreate = process.argv.includes("--create");
 
 if (!url || !key) {
   console.error(
@@ -34,7 +36,22 @@ if (error) {
   process.exit(1);
 }
 
-const exists = data.some((entry) => entry.name === bucket);
+let exists = data.some((entry) => entry.name === bucket);
+
+if (!exists && shouldCreate) {
+  const { error: createError } = await supabase.storage.createBucket(bucket, {
+    public: true,
+    fileSizeLimit: 10 * 1024 * 1024,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+  });
+  if (createError && !/already exists/i.test(createError.message)) {
+    console.error("❌ Failed to create bucket:", createError.message);
+    process.exit(1);
+  }
+  exists = true;
+  console.log(`✅ Created public bucket "${bucket}"`);
+}
+
 console.log(
   JSON.stringify(
     {
@@ -49,7 +66,7 @@ console.log(
 
 if (!exists) {
   console.error(
-    `\n❌ Bucket "${bucket}" not found. Create it in Supabase → Storage → New bucket (Public).`
+    `\n❌ Bucket "${bucket}" not found. Run: npm run storage:setup`
   );
   process.exit(1);
 }

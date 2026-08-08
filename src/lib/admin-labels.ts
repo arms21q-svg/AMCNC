@@ -51,6 +51,7 @@ export const ADMIN = {
   titleAr: "العنوان (عربي)",
   titleEn: "العنوان (إنجليزي)",
   slug: "الرابط المختصر",
+  optional: "(اختياري)",
   descriptionAr: "الوصف (عربي)",
   descriptionEn: "الوصف (إنجليزي)",
   category: "الفئة",

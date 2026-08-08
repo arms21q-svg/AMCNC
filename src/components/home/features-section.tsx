@@ -16,15 +16,15 @@ export function FeaturesSection() {
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Text */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
+            initial={false}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="font-display text-3xl font-bold text-white md:text-4xl">
+            <h2 className="font-display text-section-title font-bold text-white md:text-4xl">
               {t("title")}
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-muted">
+            <p className="text-body mt-4 leading-relaxed text-muted md:text-base">
               {t("description")}
             </p>
 
@@ -32,7 +32,7 @@ export function FeaturesSection() {
               {features.map((key, i) => (
                 <motion.li
                   key={key}
-                  initial={{ opacity: 0, x: -10 }}
+                  initial={false}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
@@ -42,8 +42,8 @@ export function FeaturesSection() {
                     <Check className="h-3 w-3" strokeWidth={3} />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-white">{t(`${key}Title`)}</p>
-                    <p className="text-sm text-muted">{t(`${key}Desc`)}</p>
+                    <p className="text-sm font-semibold text-white sm:text-base">{t(`${key}Title`)}</p>
+                    <p className="text-sm leading-relaxed text-muted">{t(`${key}Desc`)}</p>
                   </div>
                 </motion.li>
               ))}

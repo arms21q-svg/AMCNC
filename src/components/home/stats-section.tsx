@@ -39,7 +39,7 @@ export function StatsSection() {
 
   return (
     <section className="py-16 md:py-20 brand-gradient">
-      <div className="container mx-auto px-4 lg:px-8">
+      <div className="site-container">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
           {stats.map((stat, index) => (
             <motion.div

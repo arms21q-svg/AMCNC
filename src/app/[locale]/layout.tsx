@@ -120,7 +120,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <FloatingLinksProvider>
             <Header />
-            <main id="main-content" className="min-h-screen">
+            <main id="main-content" className="min-h-screen floating-safe-pad">
               {children}
             </main>
             <LayoutExtras />
