@@ -1,5 +1,5 @@
-import { MediaLibrary } from "@/components/admin/media-library";
+import { redirect } from "next/navigation";
 
-export default function AdminImagesPage() {
-  return <MediaLibrary />;
+export default function AdminImagesRedirect() {
+  redirect("/admin/projects");
 }

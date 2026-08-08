@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Home, FolderOpen, Headphones, Mail } from "lucide-react";
+import { Home, FolderOpen, Headphones, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAdminStats } from "@/lib/services.server";
 import { ADMIN } from "@/lib/admin-labels";
@@ -19,6 +19,13 @@ export default async function AdminDashboard() {
       href: "/admin/homepage",
     },
     {
+      label: ADMIN.aboutPage,
+      value: "—",
+      icon: Users,
+      color: "text-amber-400",
+      href: "/admin/about",
+    },
+    {
       label: ADMIN.projects,
       value: stats.projects,
       icon: FolderOpen,
@@ -31,13 +38,6 @@ export default async function AdminDashboard() {
       icon: Headphones,
       color: "text-green-400",
       href: "/admin/floating-links",
-    },
-    {
-      label: ADMIN.messages,
-      value: stats.messages,
-      icon: Mail,
-      color: "text-purple-400",
-      href: "/admin/messages",
     },
   ];
 
@@ -82,11 +82,14 @@ export default async function AdminDashboard() {
             <Link href="/admin/homepage" className="text-primary hover:underline">
               تعديل الصفحة الرئيسية
             </Link>
+            <Link href="/admin/about" className="text-primary hover:underline">
+              تعديل صفحة من نحن
+            </Link>
             <Link href="/admin/floating-links" className="text-primary hover:underline">
               رقم التواصل والموقع والزر العائم
             </Link>
-            <Link href="/admin/messages" className="text-primary hover:underline">
-              عرض رسائل العملاء
+            <Link href="/admin/account" className="text-primary hover:underline">
+              إدارة الحساب (البريد وكلمة المرور)
             </Link>
             <Link href="/ar/portfolio" target="_blank" className="text-primary hover:underline">
               معاينة أعمالنا ↗

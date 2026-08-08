@@ -1,5 +1,5 @@
-import { MessagesManager } from "@/components/admin/messages-manager";
+import { redirect } from "next/navigation";
 
-export default function AdminMessagesPage() {
-  return <MessagesManager />;
+export default function AdminMessagesRedirect() {
+  redirect("/admin");
 }

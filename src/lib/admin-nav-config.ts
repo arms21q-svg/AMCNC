@@ -2,10 +2,10 @@ import {
   LayoutDashboard,
   Home,
   FolderOpen,
-  Images,
   Headphones,
   Share2,
-  Mail,
+  Users,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 import { ADMIN } from "@/lib/admin-labels";
@@ -20,11 +20,11 @@ export type AdminNavItem = {
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin", label: ADMIN.dashboard, icon: LayoutDashboard, exact: true },
   { href: "/admin/homepage", label: ADMIN.homepage, icon: Home },
+  { href: "/admin/about", label: ADMIN.aboutPage, icon: Users },
   { href: "/admin/projects", label: ADMIN.projects, icon: FolderOpen },
-  { href: "/admin/images", label: ADMIN.mediaLibrary, icon: Images },
   { href: "/admin/floating-links", label: ADMIN.floatingButton, icon: Headphones },
   { href: "/admin/social", label: ADMIN.socialLinks, icon: Share2 },
-  { href: "/admin/messages", label: ADMIN.messages, icon: Mail },
+  { href: "/admin/account", label: ADMIN.accountSettings, icon: UserCog },
 ];
 
 export function isAdminNavActive(pathname: string, href: string, exact?: boolean) {

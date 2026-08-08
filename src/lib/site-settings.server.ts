@@ -72,6 +72,11 @@ async function loadSettingsMap(): Promise<SettingsMap> {
   return map;
 }
 
+export function invalidateSettingsCache() {
+  settingsCache = null;
+  settingsInflight = null;
+}
+
 export async function getHomepageContent(locale: string) {
   const settings = await getSettingsMap();
   const isAr = locale === "ar";
@@ -136,6 +141,8 @@ export async function upsertSettings(entries: SettingsMap) {
       },
     });
   }
+
+  invalidateSettingsCache();
 }
 
 function digitsOnly(phone: string) {

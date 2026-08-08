@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, FolderOpen, Images, Star } from "lucide-react";
+import { Plus, FolderOpen, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ADMIN } from "@/lib/admin-labels";
 import { cn } from "@/lib/utils";
@@ -23,12 +23,6 @@ const shortcuts = [
     href: "/admin/projects",
     label: ADMIN.manageProjectsShortcut,
     icon: FolderOpen,
-  },
-  {
-    id: "library",
-    href: "/admin/images",
-    label: ADMIN.uploadToLibraryShortcut,
-    icon: Images,
   },
   {
     id: "featured",

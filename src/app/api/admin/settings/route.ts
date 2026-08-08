@@ -7,6 +7,8 @@ import {
   syncContactFloatingLinks,
   upsertSettings,
 } from "@/lib/site-settings.server";
+import { getAboutContentRaw, saveAboutContent } from "@/lib/about-content.server";
+import type { AboutContent } from "@/lib/about-types";
 import { mapPrismaApiError } from "@/lib/prisma-errors";
 import {
   CONTACT_SETTING_KEYS,
@@ -15,6 +17,38 @@ import {
 import { HERO_SLIDE_SETTING_KEYS } from "@/lib/hero-slides";
 
 const settingsSchema = z.record(z.string(), z.string());
+
+const aboutContentSchema = z.object({
+  titleAr: z.string(),
+  titleEn: z.string(),
+  subtitleAr: z.string(),
+  subtitleEn: z.string(),
+  descriptionAr: z.string(),
+  descriptionEn: z.string(),
+  heroImageUrl: z.string(),
+  missionTitleAr: z.string(),
+  missionTitleEn: z.string(),
+  missionTextAr: z.string(),
+  missionTextEn: z.string(),
+  visionTitleAr: z.string(),
+  visionTitleEn: z.string(),
+  visionTextAr: z.string(),
+  visionTextEn: z.string(),
+  valuesHeadingAr: z.string(),
+  valuesHeadingEn: z.string(),
+  blocks: z.array(
+    z.object({
+      id: z.string(),
+      titleAr: z.string(),
+      titleEn: z.string(),
+      bodyAr: z.string(),
+      bodyEn: z.string(),
+    })
+  ),
+  showWhyUs: z.boolean(),
+  showStats: z.boolean(),
+  showCta: z.boolean(),
+});
 
 function pickKeys(map: Record<string, string>, keys: readonly string[]) {
   const result: Record<string, string> = {};
@@ -40,6 +74,11 @@ export async function GET(request: NextRequest) {
     if (section === "contact") {
       const contact = await getContactSettings();
       return NextResponse.json({ contact });
+    }
+
+    if (section === "about") {
+      const content = await getAboutContentRaw();
+      return NextResponse.json({ content });
     }
 
     const [settings, contact] = await Promise.all([
@@ -69,10 +108,16 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     const { section, data, syncFloating } = body as {
-      section: "homepage" | "contact";
-      data: Record<string, string>;
+      section: "homepage" | "contact" | "about";
+      data: Record<string, string> | AboutContent;
       syncFloating?: boolean;
     };
+
+    if (section === "about") {
+      const content = aboutContentSchema.parse(data);
+      await saveAboutContent(content);
+      return NextResponse.json({ success: true });
+    }
 
     const parsed = settingsSchema.parse(data);
 
