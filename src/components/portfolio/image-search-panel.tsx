@@ -3,11 +3,12 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
-import { Camera, Loader2, X, AlertCircle, ImageOff } from "lucide-react";
+import { Camera, FolderOpen, Loader2, X, AlertCircle, ImageOff, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/portfolio/project-card";
 import { compressImageForSearch } from "@/lib/client-image-compress";
 import { getUserErrorMessage } from "@/lib/api-errors";
+import { downloadBlob } from "@/lib/download-image";
 import type { ProjectListItem } from "@/lib/content-types";
 
 export type ImageSearchResult = {
@@ -38,12 +39,16 @@ export function ImageSearchPanel({
 }: ImageSearchPanelProps) {
   const t = useTranslations("portfolio");
   const locale = useLocale();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const filesInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const activeFileKeyRef = useRef<string | null>(null);
+  const searchFileRef = useRef<File | null>(null);
+  const [searchFile, setSearchFile] = useState<File | null>(null);
   const [searchState, setSearchState] = useState<SearchState>("idle");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const searching = searchState === "loading";
 
@@ -57,19 +62,19 @@ export function ImageSearchPanel({
   const clearSearch = useCallback(() => {
     abortRef.current?.abort();
     activeFileKeyRef.current = null;
+    searchFileRef.current = null;
+    setSearchFile(null);
     onResults(null);
     setSearchState("idle");
     setErrorMessage(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (filesInputRef.current) filesInputRef.current.value = "";
   }, [onResults, previewUrl]);
 
-  const handleImageSearch = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
+  const runImageSearch = useCallback(
+    async (file: File) => {
       const cacheKey = fileCacheKey(file);
       if (activeFileKeyRef.current === cacheKey && searching) return;
 
@@ -85,23 +90,20 @@ export function ImageSearchPanel({
       let objectUrl: string | null = null;
       try {
         const cached = clientCache.get(cacheKey);
-        if (cached) {
-          objectUrl = URL.createObjectURL(await compressImageForSearch(file));
-          setPreviewUrl((prev) => {
-            if (prev) URL.revokeObjectURL(prev);
-            return objectUrl;
-          });
-          onResults(cached);
-          setSearchState(cached.length > 0 ? "success" : "empty");
-          return;
-        }
-
         const compressed = await compressImageForSearch(file);
+        searchFileRef.current = compressed;
+        setSearchFile(compressed);
         objectUrl = URL.createObjectURL(compressed);
         setPreviewUrl((prev) => {
           if (prev) URL.revokeObjectURL(prev);
           return objectUrl;
         });
+
+        if (cached) {
+          onResults(cached);
+          setSearchState(cached.length > 0 ? "success" : "empty");
+          return;
+        }
 
         const formData = new FormData();
         formData.append("image", compressed);
@@ -140,7 +142,8 @@ export function ImageSearchPanel({
         );
         onResults(null);
       } finally {
-        if (fileInputRef.current) fileInputRef.current.value = "";
+        if (cameraInputRef.current) cameraInputRef.current.value = "";
+        if (filesInputRef.current) filesInputRef.current.value = "";
         if (abortRef.current === controller) {
           abortRef.current = null;
         }
@@ -148,6 +151,30 @@ export function ImageSearchPanel({
     },
     [onResults, searching]
   );
+
+  const handleImageSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) void runImageSearch(file);
+    },
+    [runImageSearch]
+  );
+
+  const handleDownloadSearchImage = useCallback(async () => {
+    const file = searchFileRef.current;
+    if (!file) return;
+
+    setDownloading(true);
+    try {
+      const ext = file.type.includes("png") ? "png" : "jpg";
+      const baseName = file.name.replace(/\.[^.]+$/, "") || "search-image";
+      downloadBlob(file, `${baseName}.${ext}`);
+    } catch {
+      setErrorMessage(t("searchError"));
+    } finally {
+      setDownloading(false);
+    }
+  }, [t]);
 
   const resultProjects = results
     ?.map((result) => {
@@ -160,7 +187,7 @@ export function ImageSearchPanel({
   return (
     <div className="mb-6 space-y-4">
       <input
-        ref={fileInputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         capture="environment"
@@ -168,27 +195,54 @@ export function ImageSearchPanel({
         onChange={handleImageSearch}
         disabled={searching}
       />
-
-      <button
-        type="button"
+      <input
+        ref={filesInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={handleImageSearch}
         disabled={searching}
-        onClick={() => fileInputRef.current?.click()}
-        className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-card/60 p-4 text-start transition-colors hover:border-brand-green/40 hover:bg-card active:scale-[0.99] md:p-5"
-      >
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green">
-          {searching ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <Camera className="h-5 w-5" />
-          )}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-foreground">
-            {searching ? t("searchLoading") : t("similaritySearch")}
+      />
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          disabled={searching}
+          onClick={() => cameraInputRef.current?.click()}
+          className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-card/60 p-4 text-start transition-colors hover:border-brand-green/40 hover:bg-card active:scale-[0.99]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green">
+            {searching ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Camera className="h-5 w-5" />
+            )}
           </span>
-          <span className="mt-0.5 block text-xs text-muted">{t("uploadImage")}</span>
-        </span>
-      </button>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-foreground">
+              {searching ? t("searchLoading") : t("takePhoto")}
+            </span>
+            <span className="mt-0.5 block text-xs text-muted">{t("similaritySearch")}</span>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          disabled={searching}
+          onClick={() => filesInputRef.current?.click()}
+          className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-card/60 p-4 text-start transition-colors hover:border-brand-green/40 hover:bg-card active:scale-[0.99]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green">
+            <FolderOpen className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-foreground">
+              {t("pickFromFiles")}
+            </span>
+            <span className="mt-0.5 block text-xs text-muted">{t("uploadImage")}</span>
+          </span>
+        </button>
+      </div>
 
       {(previewUrl || results || searchState === "empty" || searchState === "error") && (
         <div className="rounded-xl border border-border bg-card p-4">
@@ -205,7 +259,7 @@ export function ImageSearchPanel({
                   />
                 </div>
               ) : null}
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-sm font-semibold">{t("similaritySearch")}</h3>
                 {searchState === "loading" ? (
                   <p className="text-xs text-muted">{t("searchLoading")}</p>
@@ -216,10 +270,48 @@ export function ImageSearchPanel({
                 ) : null}
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={clearSearch} aria-label="Clear">
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex shrink-0 items-center gap-1">
+              {searchFile ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleDownloadSearchImage}
+                  disabled={downloading}
+                  aria-label={t("downloadSearchImage")}
+                  title={t("downloadSearchImage")}
+                >
+                  {downloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                </Button>
+              ) : null}
+              <Button variant="ghost" size="icon" onClick={clearSearch} aria-label="Clear">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
+
+          {searchFile ? (
+            <div className="mb-4">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={handleDownloadSearchImage}
+                disabled={downloading}
+              >
+                {downloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                {t("downloadSearchImage")}
+              </Button>
+            </div>
+          ) : null}
 
           {searchState === "loading" ? (
             <div className="flex flex-col items-center justify-center gap-3 py-10 text-muted">
@@ -232,9 +324,14 @@ export function ImageSearchPanel({
             <div className="flex flex-col items-center justify-center gap-3 py-10 text-center text-muted">
               <ImageOff className="h-8 w-8" />
               <p className="text-sm">{t("searchEmpty")}</p>
-              <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                {t("searchRetry")}
-              </Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => filesInputRef.current?.click()}>
+                  {t("pickFromFiles")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => cameraInputRef.current?.click()}>
+                  {t("takePhoto")}
+                </Button>
+              </div>
             </div>
           ) : null}
 
@@ -242,9 +339,14 @@ export function ImageSearchPanel({
             <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
               <AlertCircle className="h-8 w-8 text-red-400" />
               <p className="text-sm text-muted">{errorMessage || t("searchError")}</p>
-              <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                {t("searchRetry")}
-              </Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => filesInputRef.current?.click()}>
+                  {t("pickFromFiles")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => cameraInputRef.current?.click()}>
+                  {t("takePhoto")}
+                </Button>
+              </div>
             </div>
           ) : null}
 

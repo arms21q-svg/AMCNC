@@ -7,6 +7,7 @@ import { ADMIN } from "@/lib/admin-labels";
 import { SeedDemoCard } from "@/components/admin/seed-demo-card";
 import { QuickProjectShortcuts } from "@/components/admin/quick-project-shortcuts";
 import { RecentMessagesCard } from "@/components/admin/recent-messages-card";
+import { AdminAccountCard } from "@/components/admin/admin-account-card";
 
 export default async function AdminDashboard() {
   const stats = await getAdminStats();
@@ -73,6 +74,8 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
+        <AdminAccountCard />
+
         <Card>
           <CardHeader>
             <CardTitle>{ADMIN.projectsShortcuts}</CardTitle>

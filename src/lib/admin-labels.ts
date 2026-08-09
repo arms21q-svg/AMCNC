@@ -41,6 +41,7 @@ export const ADMIN = {
   accountSaveSuccess: "تم تحديث الحساب بنجاح",
   accountPasswordMismatch: "كلمة المرور الجديدة غير متطابقة",
   accountNoChanges: "لا توجد تغييرات للحفظ",
+  accountRole: "الصلاحية",
   projects: "الأعمال",
   featuredProjects: "الأعمال المميزة",
   floatingButton: "الزر العائم",

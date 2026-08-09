@@ -12,6 +12,7 @@ import { SetAdminRtl } from "@/components/admin/set-admin-rtl";
 import { ADMIN } from "@/lib/admin-labels";
 import { ADMIN_NAV_ITEMS, isAdminNavActive } from "@/lib/admin-nav-config";
 import { AdminDashboardNav } from "@/components/admin/admin-dashboard-nav";
+import { AdminSidebarAccount } from "@/components/admin/admin-sidebar-account";
 import { AdminImagesProvider } from "@/components/admin/admin-images-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 
@@ -83,6 +84,7 @@ export default function AdminLayout({
         </nav>
 
         <div className="absolute bottom-0 inset-x-0 p-3 border-t border-border">
+          <AdminSidebarAccount />
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 text-muted hover:text-destructive"

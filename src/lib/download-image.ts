@@ -1,5 +1,14 @@
 "use client";
 
+export function downloadBlob(blob: Blob, filename = "image.jpg") {
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(objectUrl);
+}
+
 export async function downloadImageUrl(url: string, filename = "image.jpg") {
   const res = await fetch(url);
   if (!res.ok) throw new Error("Download failed");
