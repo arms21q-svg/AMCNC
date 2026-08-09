@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { slugify } from "@/lib/utils";
 
 const optionalText = z
   .string()
@@ -7,7 +8,7 @@ const optionalText = z
   .transform((v) => (v?.trim() ? v.trim() : ""));
 
 export const projectInputSchema = z.object({
-  slug: z.string().min(1).max(120),
+  slug: z.string().max(120).optional().nullable(),
   titleAr: z.string().min(1),
   titleEn: z.string().min(1),
   descriptionAr: optionalText,
@@ -25,10 +26,18 @@ export const projectInputSchema = z.object({
 
 export type ProjectInput = z.infer<typeof projectInputSchema>;
 
+export type NormalizedProjectInput = Omit<ProjectInput, "slug"> & { slug: string };
+
 /** Ensure DB always gets non-null description strings for display fallbacks. */
-export function normalizeProjectInput(data: ProjectInput): ProjectInput {
+export function normalizeProjectInput(data: ProjectInput): NormalizedProjectInput {
+  const slug =
+    data.slug?.trim() ||
+    slugify(data.titleEn || data.titleAr) ||
+    slugify(data.titleAr);
+
   return {
     ...data,
+    slug,
     descriptionAr: data.descriptionAr?.trim() || data.titleAr,
     descriptionEn: data.descriptionEn?.trim() || data.titleEn,
     client: data.client?.trim() || null,

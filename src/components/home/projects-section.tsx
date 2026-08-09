@@ -29,7 +29,18 @@ export function ProjectsSection({ projects }: { projects: ProjectListItem[] }) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-6">
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          {projects.map((project, index) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              locale={locale}
+              layout="compact"
+              priority={index < 4}
+            />
+          ))}
+        </div>
+        <div className="hidden gap-6 md:grid md:grid-cols-2">
           {projects.map((project, index) => (
             <ProjectCard
               key={project.id}

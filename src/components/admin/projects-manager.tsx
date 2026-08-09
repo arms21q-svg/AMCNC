@@ -154,6 +154,9 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
       try {
         const payload = {
           ...form,
+          slug: editingId
+            ? form.slug
+            : slugify(form.titleEn || form.titleAr),
           year: form.year ? Number(form.year) : null,
           client: form.client || null,
           location: form.location || null,
@@ -270,21 +273,7 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
                 <Label>{ADMIN.titleEn}</Label>
                 <Input
                   value={form.titleEn}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      titleEn: e.target.value,
-                      slug: form.slug || slugify(e.target.value),
-                    })
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label>{ADMIN.slug}</Label>
-                <Input
-                  value={form.slug}
-                  onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })}
+                  onChange={(e) => setForm({ ...form, titleEn: e.target.value })}
                   required
                 />
               </div>

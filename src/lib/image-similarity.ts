@@ -77,14 +77,20 @@ export function findSimilarImages(
   }>,
   threshold = 40
 ): SimilarImage[] {
-  const scored = images
-    .filter((img) => img.imageHash)
-    .map((img) => ({
-      ...img,
-      similarity: hashToSimilarity(queryHash, img.imageHash!),
-    }))
-    .filter((img) => img.similarity >= threshold)
-    .sort((a, b) => b.similarity - a.similarity);
+  const scoreAll = (minSimilarity: number) =>
+    images
+      .filter((img) => img.imageHash)
+      .map((img) => ({
+        ...img,
+        similarity: hashToSimilarity(queryHash, img.imageHash!),
+      }))
+      .filter((img) => img.similarity >= minSimilarity)
+      .sort((a, b) => b.similarity - a.similarity);
+
+  let scored = scoreAll(threshold);
+  if (scored.length === 0) {
+    scored = scoreAll(28).slice(0, 6);
+  }
 
   const byProject = new Map<string, SimilarImage>();
   for (const img of scored) {

@@ -58,7 +58,7 @@ export function MobileCategoriesSection() {
           <p className="text-body mt-2 text-muted">{t("subtitle")}</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3">
           {categories.map((item, index) => (
             <motion.div
               key={item.key}
@@ -71,16 +71,16 @@ export function MobileCategoriesSection() {
                 href={item.href}
                 className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-brand-green/40"
               >
-                <div className="relative aspect-[4/3] bg-[#0a0a0a] p-3 min-[400px]:aspect-square">
+                <div className="relative aspect-square bg-[#0a0a0a] p-3">
                   <Image
                     src={item.image}
                     alt={t(`${item.key}Title`)}
                     fill
                     className="object-contain p-1"
-                    sizes="(max-width: 400px) 100vw, 45vw"
+                    sizes="50vw"
                   />
                 </div>
-                <p className="px-3 py-3.5 text-center text-sm font-semibold leading-snug text-white min-[400px]:px-2">
+                <p className="px-2 py-3 text-center text-sm font-semibold leading-snug text-white">
                   {t(`${item.key}Title`)}
                 </p>
               </Link>
@@ -92,7 +92,7 @@ export function MobileCategoriesSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.35 }}
-            className="min-[400px]:col-span-2"
+            className="col-span-2"
           >
             <WhatsAppLink className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-brand-green px-4 py-3.5 text-sm font-bold text-black shadow-[0_0_20px_var(--brand-glow)] transition-all hover:bg-brand-green-light active:scale-[0.98]">
               <MessageCircle className="h-5 w-5" />
