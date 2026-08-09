@@ -5,6 +5,7 @@ import {
   getActiveCategories,
   getPublishedProjects,
 } from "@/lib/projects.server";
+import { getSearchIndex } from "@/lib/image-search-index.server";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const revalidate = 3600;
@@ -36,6 +37,7 @@ export default async function PortfolioPage({
   const [projects, categories] = await Promise.all([
     getPublishedProjects(),
     getActiveCategories(),
+    getSearchIndex(),
   ]);
 
   return (

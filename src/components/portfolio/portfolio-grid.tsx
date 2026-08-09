@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useTranslations, useLocale } from "next-intl";
 import { getLocalizedField } from "@/lib/utils";
 import type { CategoryItem, ProjectListItem } from "@/lib/content-types";
@@ -9,11 +10,23 @@ import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { ProjectCard } from "@/components/portfolio/project-card";
-import {
-  ImageSearchPanel,
-  type ImageSearchResult,
-} from "@/components/portfolio/image-search-panel";
+import type { ImageSearchResult } from "@/components/portfolio/image-search-panel";
 import { filterAndRankProjects } from "@/lib/text-search";
+
+const ImageSearchPanel = dynamic(
+  () =>
+    import("@/components/portfolio/image-search-panel").then((mod) => ({
+      default: mod.ImageSearchPanel,
+    })),
+  {
+    loading: () => (
+      <div
+        className="mb-6 h-[7.5rem] animate-pulse rounded-xl border border-border bg-card/40"
+        aria-hidden
+      />
+    ),
+  }
+);
 
 export function PortfolioGrid({
   projects,

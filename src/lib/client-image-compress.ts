@@ -1,7 +1,7 @@
-/** Resize image on client before upload — faster search on mobile. */
+/** Resize image on client before hashing — matches server max edge (512). */
 export async function compressImageForSearch(
   file: File,
-  maxEdge = 720
+  maxEdge = 512
 ): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
 

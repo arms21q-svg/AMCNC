@@ -7,6 +7,7 @@ import { Camera, FolderOpen, Loader2, X, AlertCircle, ImageOff, Download } from 
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/portfolio/project-card";
 import { compressImageForSearch } from "@/lib/client-image-compress";
+import { computeClientImageHash } from "@/lib/client-image-hash";
 import { getUserErrorMessage } from "@/lib/api-errors";
 import { downloadBlob } from "@/lib/download-image";
 import type { ProjectListItem } from "@/lib/content-types";
@@ -28,8 +29,21 @@ type ImageSearchPanelProps = {
 
 const clientCache = new Map<string, ImageSearchResult[]>();
 
-function fileCacheKey(file: File) {
-  return `${file.name}:${file.size}:${file.lastModified}`;
+async function searchByHash(hash: string, signal: AbortSignal) {
+  const res = await fetch("/api/search/image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hash }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(getUserErrorMessage(res.status, payload?.error));
+  }
+
+  const data = (await res.json()) as { results?: ImageSearchResult[] };
+  return data.results || [];
 }
 
 export function ImageSearchPanel({
@@ -75,13 +89,9 @@ export function ImageSearchPanel({
 
   const runImageSearch = useCallback(
     async (file: File) => {
-      const cacheKey = fileCacheKey(file);
-      if (activeFileKeyRef.current === cacheKey && searching) return;
-
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
-      activeFileKeyRef.current = cacheKey;
 
       setSearchState("loading");
       setErrorMessage(null);
@@ -89,8 +99,12 @@ export function ImageSearchPanel({
 
       let objectUrl: string | null = null;
       try {
-        const cached = clientCache.get(cacheKey);
         const compressed = await compressImageForSearch(file);
+        const imageHash = await computeClientImageHash(compressed);
+
+        if (activeFileKeyRef.current === imageHash && searching) return;
+        activeFileKeyRef.current = imageHash;
+
         searchFileRef.current = compressed;
         setSearchFile(compressed);
         objectUrl = URL.createObjectURL(compressed);
@@ -99,34 +113,20 @@ export function ImageSearchPanel({
           return objectUrl;
         });
 
+        const cached = clientCache.get(imageHash);
         if (cached) {
           onResults(cached);
           setSearchState(cached.length > 0 ? "success" : "empty");
           return;
         }
 
-        const formData = new FormData();
-        formData.append("image", compressed);
+        const nextResults = await searchByHash(imageHash, controller.signal);
 
-        const res = await fetch("/api/search/image", {
-          method: "POST",
-          body: formData,
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(getUserErrorMessage(res.status, payload?.error));
-        }
-
-        const data = (await res.json()) as { results?: ImageSearchResult[] };
-        const nextResults = data.results || [];
-
-        if (clientCache.size > 30) {
+        if (clientCache.size > 50) {
           const oldest = clientCache.keys().next().value;
           if (oldest) clientCache.delete(oldest);
         }
-        clientCache.set(cacheKey, nextResults);
+        clientCache.set(imageHash, nextResults);
 
         if (nextResults.length === 0) {
           setSearchState("empty");
