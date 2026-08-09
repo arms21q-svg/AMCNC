@@ -480,7 +480,6 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
                         <EyeOff className="h-4 w-4 text-muted" />
                       )}
                     </div>
-                    <p className="text-sm text-muted">{project.slug}</p>
                     {project.category && (
                       <p className="text-xs text-muted mt-1">
                         {project.category.nameAr} · {project._count?.images || 0}{" "}

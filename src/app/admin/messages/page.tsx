@@ -1,5 +1,11 @@
-import { redirect } from "next/navigation";
+import { MessagesManager } from "@/components/admin/messages-manager";
+import { ADMIN } from "@/lib/admin-labels";
 
-export default function AdminMessagesRedirect() {
-  redirect("/admin");
+export default function AdminMessagesPage() {
+  return (
+    <div>
+      <h2 className="font-display text-2xl font-bold mb-6">{ADMIN.orders}</h2>
+      <MessagesManager />
+    </div>
+  );
 }

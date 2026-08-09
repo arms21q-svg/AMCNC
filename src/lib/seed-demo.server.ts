@@ -37,19 +37,19 @@ export async function seedDemoData() {
       "نستخدم أحدث تقنيات CNC لتقديم منتجات خشبية استثنائية تجمع بين الدقة والجمال والمتانة",
     hero_subtitle_en:
       "Latest CNC technology for exceptional wood products",
-    phone: "+966500000000",
-    whatsapp: "966500000000",
+    phone: "+9647700000000",
+    whatsapp: "9647700000000",
     email: "info@amcncwood.com",
-    address_ar: "الرياض، المملكة العربية السعودية",
-    address_en: "Riyadh, Saudi Arabia",
+    address_ar: "بغداد، العراق",
+    address_en: "Baghdad, Iraq",
     maps_url: "",
   });
 
   await syncContactFloatingLinks({
-    phone: "+966500000000",
-    whatsapp: "966500000000",
-    addressAr: "الرياض، المملكة العربية السعودية",
-    addressEn: "Riyadh, Saudi Arabia",
+    phone: "+9647700000000",
+    whatsapp: "9647700000000",
+    addressAr: "بغداد، العراق",
+    addressEn: "Baghdad, Iraq",
     mapsUrl: "",
   });
 

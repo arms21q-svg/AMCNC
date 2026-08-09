@@ -110,8 +110,11 @@ export async function getProjectsAdminPaginated(query: AdminListQuery) {
         OR: [
           { titleAr: { contains: query.q, mode: "insensitive" as const } },
           { titleEn: { contains: query.q, mode: "insensitive" as const } },
+          { descriptionAr: { contains: query.q, mode: "insensitive" as const } },
+          { descriptionEn: { contains: query.q, mode: "insensitive" as const } },
           { slug: { contains: query.q, mode: "insensitive" as const } },
           { client: { contains: query.q, mode: "insensitive" as const } },
+          { location: { contains: query.q, mode: "insensitive" as const } },
         ],
       }
     : undefined;

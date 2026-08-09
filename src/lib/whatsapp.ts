@@ -1,4 +1,4 @@
-const DEFAULT_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "966500000000";
+const DEFAULT_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "9647700000000";
 
 export function digitsOnly(phone: string): string {
   return phone.replace(/\D/g, "");

@@ -19,16 +19,37 @@ export async function getAllServicesAdmin() {
 export async function getAdminStats() {
   return safeDbQuery(
     async () => {
-      const [projects, services, messages, users] = await Promise.all([
+      const [projects, services, messages, users, newMessages] = await Promise.all([
         prisma.project.count(),
         prisma.service.count(),
         prisma.message.count(),
         prisma.user.count(),
+        prisma.message.count({ where: { status: "NEW" } }),
       ]);
-      return { projects, services, messages, users };
+      return { projects, services, messages, users, newMessages };
     },
-    { projects: 0, services: 0, messages: 0, users: 0 },
+    { projects: 0, services: 0, messages: 0, users: 0, newMessages: 0 },
     "admin-stats"
+  );
+}
+
+export async function getRecentMessagesAdmin(limit = 5) {
+  return safeDbQuery(
+    () =>
+      prisma.message.findMany({
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          subject: true,
+          message: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+    [],
+    "admin-recent-messages"
   );
 }
 

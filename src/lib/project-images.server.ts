@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { invalidateImageSearchIndex } from "@/lib/image-search-index.server";
 
 export async function syncProjectImages(
   projectId: string,
@@ -37,10 +38,12 @@ export async function syncProjectImages(
     where: { projectId, isCover: false },
   });
   const gallerySet = new Set(galleryUrls);
+  let indexChanged = false;
 
   for (const img of existing) {
     if (!gallerySet.has(img.url)) {
       await prisma.image.delete({ where: { id: img.id } });
+      indexChanged = true;
     }
   }
 
@@ -58,6 +61,9 @@ export async function syncProjectImages(
           altEn: titleEn,
         },
       });
+      indexChanged = true;
     }
   }
+
+  if (indexChanged) invalidateImageSearchIndex();
 }

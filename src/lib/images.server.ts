@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { computeImageHash } from "@/lib/image-similarity";
+import { invalidateImageSearchIndex } from "@/lib/image-search-index.server";
 import { validateImageFile } from "@/lib/image-upload";
 import { deleteStoredImage, uploadImageBuffer } from "@/lib/storage.server";
 
@@ -46,7 +47,7 @@ export async function saveUploadedImage(
     );
     const imageHash = await computeImageHash(buffer);
 
-    return await prisma.image.create({
+    const image = await prisma.image.create({
       data: {
         url: uploadedUrl,
         imageHash,
@@ -62,6 +63,8 @@ export async function saveUploadedImage(
         },
       },
     });
+    invalidateImageSearchIndex();
+    return image;
   } catch (error) {
     if (uploadedUrl) {
       await deleteStoredImage(uploadedUrl).catch(() => undefined);
@@ -122,6 +125,7 @@ export async function deleteLibraryImage(id: string): Promise<void> {
 
   await prisma.image.delete({ where: { id } });
   await deleteStoredImage(image.url).catch(() => undefined);
+  invalidateImageSearchIndex();
 }
 
 export async function getImageById(id: string) {

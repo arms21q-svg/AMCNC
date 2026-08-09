@@ -70,7 +70,7 @@ export function buildPageMetadata({
     alternates: buildAlternates(locale, path),
     openGraph: {
       type: "website",
-      locale: locale === "ar" ? "ar_SA" : "en_US",
+      locale: locale === "ar" ? "ar_IQ" : "en_US",
       siteName: BRAND_NAME,
       title,
       description,
@@ -110,7 +110,7 @@ export function buildWebSiteJsonLd(locale: string) {
     "@type": "WebSite",
     name: BRAND_NAME,
     url: `${siteUrl}/${locale}`,
-    inLanguage: locale === "ar" ? "ar-SA" : "en-US",
+    inLanguage: locale === "ar" ? "ar-IQ" : "en-US",
     publisher: {
       "@type": "Organization",
       name: BRAND_NAME,
@@ -132,7 +132,12 @@ export function buildLocalBusinessJsonLd(locale: string) {
       locale === "ar"
         ? "تصميم ونحت خشبي فاخر بتقنية CNC"
         : "Luxury CNC wood design and carving",
-    telephone: process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "+966500000000",
+    telephone: process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "+9647700000000",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: locale === "ar" ? "بغداد" : "Baghdad",
+      addressCountry: locale === "ar" ? "العراق" : "IQ",
+    },
     priceRange: "$$",
   };
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeImageHash, findSimilarImages } from "@/lib/image-similarity";
-import { prisma } from "@/lib/prisma";
+import { getSearchableImages } from "@/lib/image-search-index.server";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { mapPrismaApiError } from "@/lib/prisma-errors";
 
@@ -57,26 +57,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ results: cached, queryHash, cached: true });
     }
 
-    const images = await prisma.image.findMany({
-      where: {
-        imageHash: { not: null },
-        project: { published: true },
-      },
-      select: {
-        id: true,
-        url: true,
-        altAr: true,
-        altEn: true,
-        imageHash: true,
-        projectId: true,
-        project: {
-          select: { slug: true, titleAr: true, titleEn: true },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 400,
-    });
-
+    const images = await getSearchableImages();
     const results = findSimilarImages(queryHash, images, 40);
     setCachedResults(queryHash, results);
 

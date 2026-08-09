@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminOr401 } from "@/lib/require-admin";
 import { saveUploadedImage, validateUploadFile } from "@/lib/images.server";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import {
   ensureStorageBucket,
   getStorageSetupError,
@@ -64,6 +65,15 @@ function uploadErrorResponse(error: unknown) {
 export async function POST(request: NextRequest) {
   const admin = await getAdminOr401();
   if (admin instanceof NextResponse) return admin;
+
+  const ip = getClientIp(request);
+  const rate = checkRateLimit(`admin-upload:${ip}`, 30, 60_000);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { success: false, error: "Too many uploads. Please wait.", code: "RATE_LIMIT" },
+      { status: 429 }
+    );
+  }
 
   try {
     const storageError = getStorageSetupError();

@@ -21,11 +21,11 @@ export type SiteSocialLink = {
 };
 
 const defaultContact: SiteContactInfo = {
-  phone: "+966500000000",
-  whatsapp: "966500000000",
+  phone: "+9647700000000",
+  whatsapp: "9647700000000",
   email: "info@amcncwood.com",
-  addressAr: "الرياض، المملكة العربية السعودية",
-  addressEn: "Riyadh, Saudi Arabia",
+  addressAr: "بغداد، العراق",
+  addressEn: "Baghdad, Iraq",
   mapsUrl: "",
 };
 

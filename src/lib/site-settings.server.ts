@@ -110,11 +110,11 @@ export async function getHomepageContent(locale: string) {
 export async function getContactSettings() {
   const settings = await getSettingsMap();
   return {
-    phone: settings.phone || "+966500000000",
-    whatsapp: settings.whatsapp || settings.phone || "966500000000",
+    phone: settings.phone || "+9647700000000",
+    whatsapp: settings.whatsapp || settings.phone || "9647700000000",
     email: settings.email || "info@amcncwood.com",
-    addressAr: settings.address_ar || "الرياض، المملكة العربية السعودية",
-    addressEn: settings.address_en || "Riyadh, Saudi Arabia",
+    addressAr: settings.address_ar || "بغداد، العراق",
+    addressEn: settings.address_en || "Baghdad, Iraq",
     mapsUrl: settings.maps_url || "",
   };
 }

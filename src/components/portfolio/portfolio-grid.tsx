@@ -13,23 +13,7 @@ import {
   ImageSearchPanel,
   type ImageSearchResult,
 } from "@/components/portfolio/image-search-panel";
-
-function projectMatchesQuery(
-  project: ProjectListItem,
-  query: string,
-  locale: string
-): boolean {
-  if (!query) return true;
-
-  const q = query.toLowerCase();
-  const title = getLocalizedField(project, "title", locale).toLowerCase();
-  const description = getLocalizedField(project, "description", locale).toLowerCase();
-  const category = project.category
-    ? getLocalizedField(project.category, "name", locale).toLowerCase()
-    : "";
-
-  return title.includes(q) || description.includes(q) || category.includes(q);
-}
+import { filterAndRankProjects } from "@/lib/text-search";
 
 export function PortfolioGrid({
   projects,
@@ -47,16 +31,13 @@ export function PortfolioGrid({
     null
   );
 
-  const filtered = useMemo(
-    () =>
-      projects.filter((p) => {
-        const matchesSearch = projectMatchesQuery(p, debouncedSearch.trim(), locale);
-        const matchesCategory =
-          activeCategory === "all" || p.category?.slug === activeCategory;
-        return matchesSearch && matchesCategory;
-      }),
-    [projects, debouncedSearch, activeCategory, locale]
-  );
+  const filtered = useMemo(() => {
+    const byCategory = projects.filter(
+      (project) =>
+        activeCategory === "all" || project.category?.slug === activeCategory
+    );
+    return filterAndRankProjects(byCategory, debouncedSearch.trim(), locale);
+  }, [projects, debouncedSearch, activeCategory, locale]);
 
   const showImageResults = Boolean(similarResults?.length);
 

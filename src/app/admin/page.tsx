@@ -1,16 +1,32 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Home, FolderOpen, Headphones, Users } from "lucide-react";
+import { Home, FolderOpen, Mail, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAdminStats } from "@/lib/services.server";
 import { ADMIN } from "@/lib/admin-labels";
 import { SeedDemoCard } from "@/components/admin/seed-demo-card";
 import { QuickProjectShortcuts } from "@/components/admin/quick-project-shortcuts";
+import { RecentMessagesCard } from "@/components/admin/recent-messages-card";
 
 export default async function AdminDashboard() {
   const stats = await getAdminStats();
 
   const cards = [
+    {
+      label: ADMIN.projects,
+      value: stats.projects,
+      icon: FolderOpen,
+      color: "text-blue-400",
+      href: "/admin/projects",
+    },
+    {
+      label: ADMIN.orders,
+      value: stats.messages,
+      badge: stats.newMessages > 0 ? stats.newMessages : null,
+      icon: Mail,
+      color: "text-green-400",
+      href: "/admin/messages",
+    },
     {
       label: ADMIN.homepage,
       value: "—",
@@ -24,20 +40,6 @@ export default async function AdminDashboard() {
       icon: Users,
       color: "text-amber-400",
       href: "/admin/about",
-    },
-    {
-      label: ADMIN.projects,
-      value: stats.projects,
-      icon: FolderOpen,
-      color: "text-blue-400",
-      href: "/admin/projects",
-    },
-    {
-      label: ADMIN.floatingButton,
-      value: "—",
-      icon: Headphones,
-      color: "text-green-400",
-      href: "/admin/floating-links",
     },
   ];
 
@@ -56,7 +58,14 @@ export default async function AdminDashboard() {
                 <stat.icon className={cn("h-4 w-4", stat.color)} />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  {"badge" in stat && stat.badge ? (
+                    <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-400">
+                      {stat.badge} {ADMIN.newOrders}
+                    </span>
+                  ) : null}
+                </div>
               </CardContent>
             </Card>
           </Link>
@@ -79,6 +88,9 @@ export default async function AdminDashboard() {
             <CardTitle>{ADMIN.quickActions}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
+            <Link href="/admin/messages" className="text-primary hover:underline">
+              {ADMIN.orders}
+            </Link>
             <Link href="/admin/homepage" className="text-primary hover:underline">
               تعديل الصفحة الرئيسية
             </Link>
@@ -99,6 +111,10 @@ export default async function AdminDashboard() {
             </Link>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mb-8">
+        <RecentMessagesCard />
       </div>
 
       <SeedDemoCard />

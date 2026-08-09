@@ -10,7 +10,7 @@ export interface FloatingLinkItem {
   openInNewTab: boolean;
 }
 
-const phone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "966500000000";
+const phone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "9647700000000";
 
 export function getDefaultFloatingLinks(): FloatingLinkItem[] {
   return [

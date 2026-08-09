@@ -203,7 +203,7 @@ export function FloatingLinksManager() {
               <Input
                 value={contact.whatsapp}
                 onChange={(e) => setContact({ ...contact, whatsapp: e.target.value })}
-                placeholder="966500000000"
+                placeholder="9647700000000"
                 dir="ltr"
               />
             </div>
