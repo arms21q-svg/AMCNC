@@ -112,7 +112,10 @@
     "client": "Client",
     "location": "Location",
     "year": "Year",
-    "category": "Category"
+    "category": "Category",
+    "dimensions": "Dimensions",
+    "materials": "Materials",
+    "loadMore": "Load more"
   },
   "whyUs": {
     "title": "Why Choose Us",
@@ -168,6 +171,11 @@
     "send": "Send Message",
     "sending": "Sending...",
     "success": "Your message has been sent successfully!",
+    "successWithOrder": "Your order was received! Order number: {orderNumber}",
+    "orderNumberLabel": "Order number",
+    "itemsSummary": "Products / services requested",
+    "quantity": "Quantity",
+    "deliveryAddress": "Delivery address",
     "error": "An error occurred, please try again",
     "address": "Address",
     "workingHours": "Working Hours",

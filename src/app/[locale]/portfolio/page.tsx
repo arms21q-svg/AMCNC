@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { PortfolioGrid } from "@/components/portfolio/portfolio-grid";
 import {
   getActiveCategories,
-  getPublishedProjects,
+  getPublishedProjectsPaginated,
 } from "@/lib/projects.server";
 import { getSearchIndex } from "@/lib/image-search-index.server";
 import { buildPageMetadata } from "@/lib/seo";
@@ -34,8 +34,8 @@ export default async function PortfolioPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("portfolio");
-  const [projects, categories] = await Promise.all([
-    getPublishedProjects(),
+  const [pageData, categories] = await Promise.all([
+    getPublishedProjectsPaginated({ page: 1, limit: 12 }),
     getActiveCategories(),
     getSearchIndex(),
   ]);
@@ -49,7 +49,16 @@ export default async function PortfolioPage({
           </h1>
           <p className="text-body-lg text-muted">{t("subtitle")}</p>
         </div>
-        <PortfolioGrid projects={projects} categories={categories} />
+        <PortfolioGrid
+          initialProjects={pageData.items}
+          initialMeta={{
+            page: pageData.page,
+            limit: pageData.limit,
+            total: pageData.total,
+            totalPages: pageData.totalPages,
+          }}
+          categories={categories}
+        />
       </div>
     </div>
   );

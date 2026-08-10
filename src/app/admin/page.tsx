@@ -7,6 +7,7 @@ import { ADMIN } from "@/lib/admin-labels";
 import { SeedDemoCard } from "@/components/admin/seed-demo-card";
 import { QuickProjectShortcuts } from "@/components/admin/quick-project-shortcuts";
 import { RecentMessagesCard } from "@/components/admin/recent-messages-card";
+import { RecentProjectsCard } from "@/components/admin/recent-projects-card";
 import { AdminAccountCard } from "@/components/admin/admin-account-card";
 
 export default async function AdminDashboard() {
@@ -29,18 +30,18 @@ export default async function AdminDashboard() {
       href: "/admin/messages",
     },
     {
+      label: ADMIN.customers,
+      value: stats.customers,
+      icon: Users,
+      color: "text-amber-400",
+      href: "/admin/customers",
+    },
+    {
       label: ADMIN.homepage,
       value: "—",
       icon: Home,
       color: "text-primary",
       href: "/admin/homepage",
-    },
-    {
-      label: ADMIN.aboutPage,
-      value: "—",
-      icon: Users,
-      color: "text-amber-400",
-      href: "/admin/about",
     },
   ];
 
@@ -94,6 +95,9 @@ export default async function AdminDashboard() {
             <Link href="/admin/messages" className="text-primary hover:underline">
               {ADMIN.orders}
             </Link>
+            <Link href="/admin/customers" className="text-primary hover:underline">
+              {ADMIN.customers}
+            </Link>
             <Link href="/admin/homepage" className="text-primary hover:underline">
               تعديل الصفحة الرئيسية
             </Link>
@@ -116,8 +120,9 @@ export default async function AdminDashboard() {
         </Card>
       </div>
 
-      <div className="mb-8">
+      <div className="grid gap-6 lg:grid-cols-2 mb-8">
         <RecentMessagesCard />
+        <RecentProjectsCard />
       </div>
 
       <SeedDemoCard />

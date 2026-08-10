@@ -15,14 +15,35 @@ import { AdminTableSkeleton } from "@/components/admin/admin-table-skeleton";
 
 interface MessageRow {
   id: string;
+  orderNumber?: string | null;
   name: string;
   email: string;
   phone?: string | null;
   subject?: string | null;
   message: string;
+  quantity?: number | null;
+  address?: string | null;
+  itemsSummary?: string | null;
   status: "NEW" | "READ" | "REPLIED";
+  deliveryStatus?: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
   createdAt: string;
 }
+
+const deliveryColors = {
+  PENDING: "bg-amber-500/10 text-amber-400",
+  PROCESSING: "bg-blue-500/10 text-blue-400",
+  SHIPPED: "bg-purple-500/10 text-purple-400",
+  DELIVERED: "bg-green-500/10 text-green-400",
+  CANCELLED: "bg-red-500/10 text-red-400",
+};
+
+const deliveryLabels = {
+  PENDING: ADMIN.deliveryPending,
+  PROCESSING: ADMIN.deliveryProcessing,
+  SHIPPED: ADMIN.deliveryShipped,
+  DELIVERED: ADMIN.deliveryDelivered,
+  CANCELLED: ADMIN.deliveryCancelled,
+};
 
 const statusColors = {
   NEW: "bg-green-500/10 text-green-400",
@@ -36,7 +57,7 @@ const statusLabels = {
   REPLIED: ADMIN.statusReplied,
 };
 
-export function MessagesManager() {
+export function MessagesManager({ initialSearch = "" }: { initialSearch?: string }) {
   const { runLocked } = useSubmitLock();
   const handleLoadError = useCallback(() => {
     toast.error("تعذر تحميل الرسائل");
@@ -55,8 +76,29 @@ export function MessagesManager() {
     endpoint: "/api/admin/messages",
     listKey: "messages",
     limit: 15,
+    initialSearch,
     onError: handleLoadError,
   });
+
+  const updateDeliveryStatus = async (
+    id: string,
+    deliveryStatus: NonNullable<MessageRow["deliveryStatus"]>
+  ) => {
+    await runLocked(async () => {
+      try {
+        const res = await fetch(`/api/admin/messages/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deliveryStatus }),
+        });
+        if (!res.ok) throw new Error("Failed");
+        toast.success("تم تحديث حالة التسليم");
+        await load();
+      } catch {
+        toast.error("فشل تحديث حالة التسليم");
+      }
+    });
+  };
 
   const updateStatus = async (id: string, status: MessageRow["status"]) => {
     await runLocked(async () => {
@@ -91,14 +133,12 @@ export function MessagesManager() {
 
   return (
     <div className="space-y-6">
-      <h2 className="font-display text-2xl font-bold">{ADMIN.messages}</h2>
-
       <Card>
         <CardHeader className="space-y-4">
           <CardTitle>
             {ADMIN.contactMessages} ({meta.total})
           </CardTitle>
-          <AdminSearch value={search} onChange={setSearch} placeholder="بحث في الرسائل..." />
+          <AdminSearch value={search} onChange={setSearch} placeholder={ADMIN.ordersSearchPlaceholder} />
         </CardHeader>
         <CardContent>
           {loading && messages.length === 0 ? (
@@ -112,8 +152,13 @@ export function MessagesManager() {
                   <div key={msg.id} className="rounded-lg border border-border p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
                           <p className="font-medium">{msg.name}</p>
+                          {msg.orderNumber ? (
+                            <span className="text-xs text-muted" dir="ltr">
+                              {ADMIN.orderNumber}: {msg.orderNumber}
+                            </span>
+                          ) : null}
                           <span
                             className={cn(
                               "text-xs px-2 py-0.5 rounded-full",
@@ -122,6 +167,16 @@ export function MessagesManager() {
                           >
                             {statusLabels[msg.status]}
                           </span>
+                          {msg.deliveryStatus ? (
+                            <span
+                              className={cn(
+                                "text-xs px-2 py-0.5 rounded-full",
+                                deliveryColors[msg.deliveryStatus]
+                              )}
+                            >
+                              {deliveryLabels[msg.deliveryStatus]}
+                            </span>
+                          ) : null}
                         </div>
                         <a
                           href={`mailto:${msg.email}`}
@@ -139,6 +194,24 @@ export function MessagesManager() {
                         {msg.subject && (
                           <p className="text-sm font-medium mt-2">{msg.subject}</p>
                         )}
+                        {msg.itemsSummary ? (
+                          <p className="text-sm mt-2">
+                            <span className="font-medium">{ADMIN.itemsSummary}: </span>
+                            {msg.itemsSummary}
+                          </p>
+                        ) : null}
+                        {msg.quantity != null && msg.quantity > 0 ? (
+                          <p className="text-sm mt-1">
+                            <span className="font-medium">{ADMIN.quantity}: </span>
+                            {msg.quantity}
+                          </p>
+                        ) : null}
+                        {msg.address ? (
+                          <p className="text-sm mt-1">
+                            <span className="font-medium">{ADMIN.deliveryAddress}: </span>
+                            {msg.address}
+                          </p>
+                        ) : null}
                         <p className="text-sm text-muted mt-2 whitespace-pre-wrap">
                           {msg.message}
                         </p>
@@ -146,7 +219,28 @@ export function MessagesManager() {
                           {new Date(msg.createdAt).toLocaleString("ar-IQ")}
                         </p>
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-col gap-2 sm:items-end">
+                        <select
+                          className="h-9 rounded-md border border-border bg-background px-2 text-xs"
+                          value={msg.deliveryStatus || "PENDING"}
+                          onChange={(e) =>
+                            void updateDeliveryStatus(
+                              msg.id,
+                              e.target.value as NonNullable<MessageRow["deliveryStatus"]>
+                            )
+                          }
+                        >
+                          {(
+                            Object.keys(deliveryLabels) as Array<
+                              keyof typeof deliveryLabels
+                            >
+                          ).map((key) => (
+                            <option key={key} value={key}>
+                              {deliveryLabels[key]}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex flex-wrap gap-2">
                         {msg.status === "NEW" && (
                           <Button
                             size="sm"
@@ -173,6 +267,7 @@ export function MessagesManager() {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
+                        </div>
                       </div>
                     </div>
                   </div>

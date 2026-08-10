@@ -24,7 +24,6 @@ type SearchState = "idle" | "loading" | "success" | "empty" | "error";
 type ImageSearchPanelProps = {
   onResults: (results: ImageSearchResult[] | null) => void;
   results: ImageSearchResult[] | null;
-  projects: ProjectListItem[];
 };
 
 const clientCache = new Map<string, ImageSearchResult[]>();
@@ -49,7 +48,6 @@ async function searchByHash(hash: string, signal: AbortSignal) {
 export function ImageSearchPanel({
   onResults,
   results,
-  projects,
 }: ImageSearchPanelProps) {
   const t = useTranslations("portfolio");
   const locale = useLocale();
@@ -178,8 +176,41 @@ export function ImageSearchPanel({
 
   const resultProjects = results
     ?.map((result) => {
-      const project = projects.find((p) => p.slug === result.project?.slug);
-      if (!project) return null;
+      if (!result.project) return null;
+      const project: ProjectListItem = {
+        id: result.project.slug,
+        slug: result.project.slug,
+        titleAr: result.project.titleAr,
+        titleEn: result.project.titleEn,
+        descriptionAr: result.project.titleAr,
+        descriptionEn: result.project.titleEn,
+        client: null,
+        location: null,
+        year: null,
+        dimensionsAr: null,
+        dimensionsEn: null,
+        materialsAr: null,
+        materialsEn: null,
+        keywordsAr: null,
+        keywordsEn: null,
+        featured: false,
+        published: true,
+        order: 0,
+        categoryId: null,
+        category: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        images: [
+          {
+            id: result.id,
+            url: result.url,
+            altAr: null,
+            altEn: null,
+            isCover: true,
+            order: 0,
+          },
+        ],
+      };
       return { project, similarity: result.similarity };
     })
     .filter(Boolean) as Array<{ project: ProjectListItem; similarity: number }>;
@@ -314,9 +345,24 @@ export function ImageSearchPanel({
           ) : null}
 
           {searchState === "loading" ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-10 text-muted">
-              <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
-              <p className="text-sm">{t("searchLoading")}</p>
+            <div className="space-y-4">
+              <div className="flex flex-col items-center justify-center gap-3 py-6 text-muted">
+                <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
+                <p className="text-sm">{t("searchLoading")}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-6">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="animate-pulse overflow-hidden rounded-lg border border-border bg-card"
+                  >
+                    <div className="aspect-square bg-muted/20" />
+                    <div className="px-2 py-3">
+                      <div className="mx-auto h-3 w-2/3 rounded bg-muted/30" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
 

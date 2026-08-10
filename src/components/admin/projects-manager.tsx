@@ -38,6 +38,12 @@ interface ProjectRow {
   client?: string | null;
   location?: string | null;
   year?: number | null;
+  dimensionsAr?: string | null;
+  dimensionsEn?: string | null;
+  materialsAr?: string | null;
+  materialsEn?: string | null;
+  keywordsAr?: string | null;
+  keywordsEn?: string | null;
   featured: boolean;
   published: boolean;
   order: number;
@@ -55,6 +61,12 @@ const emptyForm = {
   client: "",
   location: "",
   year: "",
+  dimensionsAr: "",
+  dimensionsEn: "",
+  materialsAr: "",
+  materialsEn: "",
+  keywordsAr: "",
+  keywordsEn: "",
   featured: false,
   published: true,
   order: 0,
@@ -71,6 +83,7 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
   const [showForm, setShowForm] = useState(openAddForm);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [libraryTarget, setLibraryTarget] = useState<"cover" | "gallery" | null>(null);
+  const [backfilling, setBackfilling] = useState(false);
   const { runLocked } = useSubmitLock();
 
   const handleProjectsLoadError = useCallback(() => {
@@ -134,6 +147,12 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
         client: project.client || "",
         location: project.location || "",
         year: project.year?.toString() || "",
+        dimensionsAr: project.dimensionsAr || "",
+        dimensionsEn: project.dimensionsEn || "",
+        materialsAr: project.materialsAr || "",
+        materialsEn: project.materialsEn || "",
+        keywordsAr: project.keywordsAr || "",
+        keywordsEn: project.keywordsEn || "",
         featured: project.featured,
         published: project.published,
         order: project.order,
@@ -216,6 +235,26 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
     }
   };
 
+  const handleBackfillHashes = async () => {
+    setBackfilling(true);
+    try {
+      const res = await fetch("/api/admin/images/backfill-hashes", { method: "POST" });
+      const data = (await res.json()) as {
+        updated?: number;
+        remaining?: number;
+        error?: string;
+      };
+      if (!res.ok) throw new Error(data.error || "failed");
+      toast.success(
+        `تم تحديث ${data.updated ?? 0} صورة. المتبقي: ${data.remaining ?? 0}`
+      );
+    } catch {
+      toast.error("فشل تحديث فهرس البحث بالصورة");
+    } finally {
+      setBackfilling(false);
+    }
+  };
+
   const featuredCount = projects.filter((p) => p.featured).length;
 
   return (
@@ -242,16 +281,26 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
             {ADMIN.projectsOnHomeHint} ({featuredCount} مميز)
           </p>
         </div>
-        <Button
-          className="gap-2"
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-        >
-          <Plus className="h-4 w-4" />
-          {ADMIN.addProject}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={backfilling}
+            onClick={() => void handleBackfillHashes()}
+          >
+            {backfilling ? ADMIN.saving : ADMIN.backfillHashes}
+          </Button>
+          <Button
+            className="gap-2"
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            {ADMIN.addProject}
+          </Button>
+        </div>
       </div>
 
       {showForm && (
@@ -383,6 +432,51 @@ export function ProjectsManager({ openAddForm = false }: { openAddForm?: boolean
                   type="number"
                   value={form.year}
                   onChange={(e) => setForm({ ...form, year: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{ADMIN.dimensionsAr}</Label>
+                <Input
+                  value={form.dimensionsAr}
+                  onChange={(e) => setForm({ ...form, dimensionsAr: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{ADMIN.dimensionsEn}</Label>
+                <Input
+                  value={form.dimensionsEn}
+                  onChange={(e) => setForm({ ...form, dimensionsEn: e.target.value })}
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{ADMIN.materialsAr}</Label>
+                <Input
+                  value={form.materialsAr}
+                  onChange={(e) => setForm({ ...form, materialsAr: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{ADMIN.materialsEn}</Label>
+                <Input
+                  value={form.materialsEn}
+                  onChange={(e) => setForm({ ...form, materialsEn: e.target.value })}
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>{ADMIN.keywordsAr}</Label>
+                <Input
+                  value={form.keywordsAr}
+                  onChange={(e) => setForm({ ...form, keywordsAr: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>{ADMIN.keywordsEn}</Label>
+                <Input
+                  value={form.keywordsEn}
+                  onChange={(e) => setForm({ ...form, keywordsEn: e.target.value })}
+                  dir="ltr"
                 />
               </div>
               <div className="space-y-2">

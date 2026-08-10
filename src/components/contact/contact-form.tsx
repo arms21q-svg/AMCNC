@@ -19,6 +19,9 @@ const contactSchema = z.object({
   email: z.string().email(),
   phone: z.string().optional(),
   subject: z.string().optional(),
+  itemsSummary: z.string().max(500).optional(),
+  quantity: z.string().optional(),
+  deliveryAddress: z.string().max(500).optional(),
   message: z.string().min(10),
 });
 
@@ -29,6 +32,7 @@ export function ContactForm() {
   const locale = useLocale();
   const { contact } = useSiteData();
   const [submitting, setSubmitting] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   const {
     register,
@@ -42,15 +46,41 @@ export function ContactForm() {
 
   const onSubmit = async (data: ContactFormValues) => {
     setSubmitting(true);
+    setOrderNumber(null);
     try {
+      const quantityRaw = data.quantity?.trim();
+      const quantityParsed = quantityRaw ? Number(quantityRaw) : undefined;
+      const payload = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        subject: data.subject,
+        message: data.message,
+        itemsSummary: data.itemsSummary,
+        address: data.deliveryAddress,
+        quantity:
+          quantityParsed && Number.isFinite(quantityParsed) && quantityParsed > 0
+            ? Math.floor(quantityParsed)
+            : undefined,
+      };
+
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Failed");
-      toast.success(t("success"));
+      const body = (await res.json()) as { orderNumber?: string; error?: string };
+      if (!res.ok) throw new Error(body.error || "Failed");
+
+      if (body.orderNumber) {
+        setOrderNumber(body.orderNumber);
+      }
+      toast.success(
+        body.orderNumber
+          ? t("successWithOrder", { orderNumber: body.orderNumber })
+          : t("success")
+      );
       reset();
     } catch {
       toast.error(t("error"));
@@ -106,6 +136,24 @@ export function ContactForm() {
           <Input id="subject" {...register("subject")} className="mt-1.5" />
         </div>
         <div>
+          <Label htmlFor="itemsSummary">{t("itemsSummary")}</Label>
+          <Input id="itemsSummary" {...register("itemsSummary")} className="mt-1.5" />
+        </div>
+        <div>
+          <Label htmlFor="quantity">{t("quantity")}</Label>
+          <Input
+            id="quantity"
+            type="number"
+            min={1}
+            {...register("quantity")}
+            className="mt-1.5"
+          />
+        </div>
+        <div>
+          <Label htmlFor="deliveryAddress">{t("deliveryAddress")}</Label>
+          <Input id="deliveryAddress" {...register("deliveryAddress")} className="mt-1.5" />
+        </div>
+        <div>
           <Label htmlFor="message">{t("message")}</Label>
           <Textarea id="message" {...register("message")} className="mt-1.5" />
           {errors.message && <p className="mt-1 text-xs text-destructive">{t("message")}</p>}
@@ -124,6 +172,14 @@ export function ContactForm() {
             {t("whatsapp")}
           </Button>
         </div>
+        {orderNumber ? (
+          <p className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+            {t("orderNumberLabel")}:{" "}
+            <span className="font-semibold" dir="ltr">
+              {orderNumber}
+            </span>
+          </p>
+        ) : null}
       </form>
 
       <div className="space-y-8">

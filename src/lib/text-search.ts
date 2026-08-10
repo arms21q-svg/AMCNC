@@ -79,6 +79,12 @@ export function scoreProjectMatch(
   score += fieldScore(normalizeSearchText(project.slug), normalizedQuery, tokens, 6);
   score += fieldScore(normalizeSearchText(project.client || ""), normalizedQuery, tokens, 5);
   score += fieldScore(normalizeSearchText(project.location || ""), normalizedQuery, tokens, 4);
+  score += fieldScore(normalizeSearchText(project.dimensionsAr || ""), normalizedQuery, tokens, 5);
+  score += fieldScore(normalizeSearchText(project.dimensionsEn || ""), normalizedQuery, tokens, 5);
+  score += fieldScore(normalizeSearchText(project.materialsAr || ""), normalizedQuery, tokens, 6);
+  score += fieldScore(normalizeSearchText(project.materialsEn || ""), normalizedQuery, tokens, 6);
+  score += fieldScore(normalizeSearchText(project.keywordsAr || ""), normalizedQuery, tokens, 5);
+  score += fieldScore(normalizeSearchText(project.keywordsEn || ""), normalizedQuery, tokens, 5);
 
   return score;
 }

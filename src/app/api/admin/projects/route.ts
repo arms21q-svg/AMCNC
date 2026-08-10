@@ -36,17 +36,6 @@ export async function POST(request: NextRequest) {
       data: {
         ...rest,
         categoryId: rest.categoryId || null,
-        images: coverUrl
-          ? {
-              create: {
-                url: coverUrl,
-                isCover: true,
-                order: 0,
-                altAr: rest.titleAr,
-                altEn: rest.titleEn,
-              },
-            }
-          : undefined,
       },
       include: {
         category: { select: { id: true, slug: true, nameAr: true, nameEn: true } },
@@ -54,13 +43,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (galleryUrls?.length) {
+    if (coverUrl || galleryUrls?.length) {
       await syncProjectImages(
         project.id,
         rest.titleAr,
         rest.titleEn,
-        null,
-        galleryUrls.filter((url) => url !== coverUrl)
+        coverUrl,
+        galleryUrls?.filter(Boolean)
       );
     }
 

@@ -118,6 +118,22 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                   <p className="font-medium">{project.year}</p>
                 </div>
               )}
+              {"dimensionsAr" in project && getLocalizedField(project, "dimensions", locale) && (
+                <div>
+                  <span className="text-xs text-muted uppercase">{t("dimensions")}</span>
+                  <p className="font-medium">
+                    {getLocalizedField(project, "dimensions", locale)}
+                  </p>
+                </div>
+              )}
+              {"materialsAr" in project && getLocalizedField(project, "materials", locale) && (
+                <div>
+                  <span className="text-xs text-muted uppercase">{t("materials")}</span>
+                  <p className="font-medium">
+                    {getLocalizedField(project, "materials", locale)}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2">

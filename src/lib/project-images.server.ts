@@ -1,6 +1,44 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { invalidateImageSearchIndex } from "@/lib/image-search-index.server";
+import { resolveImageHashForUrl } from "@/lib/image-hash.server";
+
+async function upsertImageWithHash(data: {
+  projectId: string;
+  url: string;
+  isCover: boolean;
+  order: number;
+  altAr: string;
+  altEn: string;
+  existingId?: string;
+}) {
+  const imageHash = await resolveImageHashForUrl(data.url);
+
+  if (data.existingId) {
+    await prisma.image.update({
+      where: { id: data.existingId },
+      data: {
+        url: data.url,
+        altAr: data.altAr,
+        altEn: data.altEn,
+        ...(imageHash ? { imageHash } : {}),
+      },
+    });
+    return;
+  }
+
+  await prisma.image.create({
+    data: {
+      projectId: data.projectId,
+      url: data.url,
+      isCover: data.isCover,
+      order: data.order,
+      altAr: data.altAr,
+      altEn: data.altEn,
+      imageHash,
+    },
+  });
+}
 
 export async function syncProjectImages(
   projectId: string,
@@ -9,36 +47,33 @@ export async function syncProjectImages(
   coverUrl?: string | null,
   galleryUrls?: string[]
 ) {
+  let indexChanged = false;
+
   if (coverUrl) {
     const cover = await prisma.image.findFirst({
       where: { projectId, isCover: true },
     });
-    if (cover) {
-      await prisma.image.update({
-        where: { id: cover.id },
-        data: { url: coverUrl, altAr: titleAr, altEn: titleEn },
-      });
-    } else {
-      await prisma.image.create({
-        data: {
-          projectId,
-          url: coverUrl,
-          isCover: true,
-          order: 0,
-          altAr: titleAr,
-          altEn: titleEn,
-        },
-      });
-    }
+    await upsertImageWithHash({
+      projectId,
+      url: coverUrl,
+      isCover: true,
+      order: 0,
+      altAr: titleAr,
+      altEn: titleEn,
+      existingId: cover?.id,
+    });
+    indexChanged = true;
   }
 
-  if (!galleryUrls) return;
+  if (!galleryUrls) {
+    if (indexChanged) invalidateImageSearchIndex();
+    return;
+  }
 
   const existing = await prisma.image.findMany({
     where: { projectId, isCover: false },
   });
   const gallerySet = new Set(galleryUrls);
-  let indexChanged = false;
 
   for (const img of existing) {
     if (!gallerySet.has(img.url)) {
@@ -51,15 +86,13 @@ export async function syncProjectImages(
   let order = 1;
   for (const url of galleryUrls) {
     if (url && !existingUrls.has(url)) {
-      await prisma.image.create({
-        data: {
-          projectId,
-          url,
-          isCover: false,
-          order: order++,
-          altAr: titleAr,
-          altEn: titleEn,
-        },
+      await upsertImageWithHash({
+        projectId,
+        url,
+        isCover: false,
+        order: order++,
+        altAr: titleAr,
+        altEn: titleEn,
       });
       indexChanged = true;
     }

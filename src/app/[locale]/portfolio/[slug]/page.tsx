@@ -15,7 +15,11 @@ export const revalidate = 3600;
 export async function generateStaticParams() {
   const slugs = await getPublishedProjectSlugs();
   const allSlugs =
-    slugs.length > 0 ? slugs : DEMO_FEATURED_PROJECTS.map((p) => p.slug);
+    slugs.length > 0
+      ? slugs
+      : process.env.NODE_ENV === "production"
+        ? []
+        : DEMO_FEATURED_PROJECTS.map((p) => p.slug);
 
   return routing.locales.flatMap((locale) =>
     allSlugs.map((slug) => ({ locale, slug }))

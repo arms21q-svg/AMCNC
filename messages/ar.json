@@ -112,7 +112,10 @@
     "client": "العميل",
     "location": "الموقع",
     "year": "السنة",
-    "category": "التصنيف"
+    "category": "التصنيف",
+    "dimensions": "المقاسات",
+    "materials": "المواد",
+    "loadMore": "تحميل المزيد"
   },
   "whyUs": {
     "title": "لماذا نحن",
@@ -168,6 +171,11 @@
     "send": "إرسال الرسالة",
     "sending": "جاري الإرسال...",
     "success": "تم إرسال رسالتك بنجاح!",
+    "successWithOrder": "تم استلام طلبك بنجاح! رقم الطلب: {orderNumber}",
+    "orderNumberLabel": "رقم الطلب",
+    "itemsSummary": "المنتجات / الخدمات المطلوبة",
+    "quantity": "الكمية",
+    "deliveryAddress": "عنوان التسليم",
     "error": "حدث خطأ، يرجى المحاولة مرة أخرى",
     "address": "العنوان",
     "workingHours": "ساعات العمل",

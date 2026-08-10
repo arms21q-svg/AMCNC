@@ -3,8 +3,11 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAdminOr401 } from "@/lib/require-admin";
 
-const statusSchema = z.object({
-  status: z.enum(["NEW", "READ", "REPLIED"]),
+const updateSchema = z.object({
+  status: z.enum(["NEW", "READ", "REPLIED"]).optional(),
+  deliveryStatus: z
+    .enum(["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"])
+    .optional(),
 });
 
 export async function PATCH(
@@ -17,10 +20,17 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const { status } = statusSchema.parse(await request.json());
+    const body = updateSchema.parse(await request.json());
+    if (!body.status && !body.deliveryStatus) {
+      return NextResponse.json({ error: "No updates provided" }, { status: 400 });
+    }
+
     const message = await prisma.message.update({
       where: { id },
-      data: { status },
+      data: {
+        ...(body.status ? { status: body.status } : {}),
+        ...(body.deliveryStatus ? { deliveryStatus: body.deliveryStatus } : {}),
+      },
     });
     return NextResponse.json({ message });
   } catch {

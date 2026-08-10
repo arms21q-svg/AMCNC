@@ -17,6 +17,14 @@ enum MessageStatus {
   REPLIED
 }
 
+enum DeliveryStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -57,6 +65,12 @@ model Project {
   client        String?
   location      String?
   year          Int?
+  dimensionsAr  String?
+  dimensionsEn  String?
+  materialsAr   String?
+  materialsEn   String?
+  keywordsAr    String?
+  keywordsEn    String?
   featured      Boolean   @default(false)
   published     Boolean   @default(true)
   order         Int       @default(0)
@@ -106,16 +120,23 @@ model Image {
 }
 
 model Message {
-  id        String        @id @default(cuid())
-  name      String
-  email     String
-  phone     String?
-  subject   String?
-  message   String        @db.Text
-  status    MessageStatus @default(NEW)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id             String         @id @default(cuid())
+  orderNumber    String?        @unique
+  name           String
+  email          String
+  phone          String?
+  subject        String?
+  message        String         @db.Text
+  status         MessageStatus  @default(NEW)
+  deliveryStatus DeliveryStatus @default(PENDING)
+  quantity       Int?
+  address        String?
+  itemsSummary   String?        @db.Text
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
+  @@index([deliveryStatus])
+  @@index([createdAt])
   @@map("messages")
 }
 

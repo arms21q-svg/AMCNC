@@ -19,16 +19,26 @@ export async function getAllServicesAdmin() {
 export async function getAdminStats() {
   return safeDbQuery(
     async () => {
-      const [projects, services, messages, users, newMessages] = await Promise.all([
-        prisma.project.count(),
-        prisma.service.count(),
-        prisma.message.count(),
-        prisma.user.count(),
-        prisma.message.count({ where: { status: "NEW" } }),
-      ]);
-      return { projects, services, messages, users, newMessages };
+      const [projects, services, messages, newMessages, distinctCustomers] =
+        await Promise.all([
+          prisma.project.count(),
+          prisma.service.count(),
+          prisma.message.count(),
+          prisma.message.count({ where: { status: "NEW" } }),
+          prisma.message.findMany({
+            distinct: ["email"],
+            select: { email: true },
+          }),
+        ]);
+      return {
+        projects,
+        services,
+        messages,
+        newMessages,
+        customers: distinctCustomers.length,
+      };
     },
-    { projects: 0, services: 0, messages: 0, users: 0, newMessages: 0 },
+    { projects: 0, services: 0, messages: 0, newMessages: 0, customers: 0 },
     "admin-stats"
   );
 }
@@ -61,6 +71,9 @@ export async function getMessagesAdminPaginated(query: AdminListQuery) {
           { email: { contains: query.q, mode: "insensitive" as const } },
           { subject: { contains: query.q, mode: "insensitive" as const } },
           { message: { contains: query.q, mode: "insensitive" as const } },
+          { orderNumber: { contains: query.q, mode: "insensitive" as const } },
+          { itemsSummary: { contains: query.q, mode: "insensitive" as const } },
+          { address: { contains: query.q, mode: "insensitive" as const } },
         ],
       }
     : undefined;
@@ -91,5 +104,71 @@ export async function getAllMessagesAdmin() {
       }),
     [],
     "admin-messages"
+  );
+}
+
+export type CustomerRow = {
+  email: string;
+  name: string;
+  phone: string | null;
+  orderCount: number;
+  lastOrderAt: Date;
+  latestDeliveryStatus: string;
+};
+
+export async function getCustomersAdminPaginated(query: AdminListQuery) {
+  const where = query.q
+    ? {
+        OR: [
+          { email: { contains: query.q, mode: "insensitive" as const } },
+          { name: { contains: query.q, mode: "insensitive" as const } },
+          { phone: { contains: query.q, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+
+  return safeDbQuery(
+    async () => {
+      const distinct = await prisma.message.findMany({
+        where,
+        distinct: ["email"],
+        select: { email: true },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const total = distinct.length;
+      const pageEmails = distinct.slice(query.skip, query.skip + query.limit);
+
+      const items: CustomerRow[] = await Promise.all(
+        pageEmails.map(async ({ email }) => {
+          const [latest, orderCount] = await Promise.all([
+            prisma.message.findFirst({
+              where: { email },
+              orderBy: { createdAt: "desc" },
+              select: {
+                name: true,
+                phone: true,
+                createdAt: true,
+                deliveryStatus: true,
+              },
+            }),
+            prisma.message.count({ where: { email } }),
+          ]);
+
+          return {
+            email,
+            name: latest?.name || email,
+            phone: latest?.phone ?? null,
+            orderCount,
+            lastOrderAt: latest?.createdAt || new Date(0),
+            latestDeliveryStatus: latest?.deliveryStatus || "PENDING",
+          };
+        })
+      );
+
+      return { items, total };
+    },
+    { items: [], total: 0 },
+    "admin-customers-paged"
   );
 }

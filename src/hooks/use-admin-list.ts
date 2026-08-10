@@ -17,19 +17,21 @@ type UseAdminListOptions<TKey extends string> = {
   listKey: TKey;
   limit?: number;
   enabled?: boolean;
+  initialSearch?: string;
   onError?: (error: unknown) => void;
 };
 
 export function useAdminList<TKey extends string, TItem>(
   options: UseAdminListOptions<TKey>
 ) {
-  const { endpoint, listKey, limit = 20, enabled = true, onError } = options;
+  const { endpoint, listKey, limit = 20, enabled = true, initialSearch = "", onError } =
+    options;
   const [items, setItems] = useState<TItem[]>([]);
   const [meta, setMeta] = useState<AdminListMeta>(defaultMeta);
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [page, setPageState] = useState(1);
-  const [search, setSearchState] = useState("");
+  const [search, setSearchState] = useState(initialSearch);
   const debouncedSearch = useDebouncedValue(search);
 
   const requestSeq = useRef(0);
